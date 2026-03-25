@@ -64,30 +64,30 @@ def generate_launch_description():
                 'inner_rate_hz': 1000.0,
 
                 # 正弦波軌道
-                'sine_amplitude_m':  0.060,   # 振幅 [m]  （4 mm）
-                'sine_freq_hz':      0.8,     # 周波数 [Hz]
-                'center_position_m': 0.080,   # 中心位置 [m] （5 mm）
+                'sine_amplitude_m':  0.010,   # 振幅 [m]  （4 mm）
+                'sine_freq_hz':      1.0,     # 周波数 [Hz]
+                'center_position_m': 0.045,   # 中心位置 [m]
 
                 # PRESSURIZE ランプ軌道
                 # 原点から center_position_m まで近づく速度 [m/s]。
                 # 小さいほどゆっくり・振動しにくい。大きいほど素早く移動。
                 # 例: 0.005 → 5 mm/s ≒ center=5 mm に 1 秒で到達
-                'ramp_rate_m_s': 0.004,
+                'ramp_rate_m_s': 0.009,
 
                 # 圧力
-                'base_pressure_kpa':   50.0,  # 両室のベース圧力 [kPa]
+                'base_pressure_kpa':   150.0,  # 両室のベース圧力 [kPa]
                 'supply_pressure_kpa': 600.0,  # 圧力指令の上限（供給圧以下に設定）[kPa]
 
                 # 位置ループPID(外側)
-                'pos_kp': 600.0,   # 比例ゲイン [N/m]
-                'pos_ki': 200.0,   # 積分ゲイン [N/(m·s)]
+                'pos_kp': 1900.0,   # 比例ゲイン [N/m]
+                'pos_ki': 1200.0,   # 積分ゲイン [N/(m·s)]
                 'pos_kd': 0.0,   # 微分ゲイン [N·s/m]
                 'pos_td': 0.05,  # 微分フィルタ時定数 [s]
                 'pos_output_limit': 1000.0,  # 推力指令の上限 [N]
 
                 # 圧力ループ PI（内側）
-                'pres_kp':  0.019,   # 比例ゲイン [V/kPa]
-                'pres_ki':  0.01,   # 積分ゲイン [V/(kPa·s)]
+                'pres_kp':  0.03,   # 比例ゲイン [V/kPa]
+                'pres_ki':  0.02,   # 積分ゲイン [V/(kPa·s)]
                 'pres_kd':  0.0,    # 微分ゲイン（通常 0）
                 'pres_td':  0.01,   # 微分フィルタ時定数 [s]
                 # バルブ加算電圧上限 [V]。中立 5V ± この値 → 0.1〜9.9V に収まるよう 4.9 推奨。
