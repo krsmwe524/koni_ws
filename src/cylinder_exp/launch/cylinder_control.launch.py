@@ -51,58 +51,50 @@ def generate_launch_description():
             parameters=[{
 
                 # ハードウェア
-                'ch_head': 0,   # AO ボードのヘッド側チャンネル番号
-                'ch_rod':  1,   # AO ボードのロッド側チャンネル番号
+                'ch_head': 0,
+                'ch_rod':  1,
 
                 # ループ周期
-                # 外側（位置）ループ。500 Hz 推奨。
-                # Python + rclpy で安定して回せる上限を実測して決定すること。
                 'outer_rate_hz': 500.0,
-
-                # 内側（圧力）ループ。外側の 2〜5 倍推奨。
-                # Python + rclpy で安定して回せる上限を実測して決定すること。
                 'inner_rate_hz': 1000.0,
 
                 # 正弦波軌道
-                'sine_amplitude_m':  0.0070,   # 振幅 [m]  （4 mm）
-                'sine_freq_hz':      1.0,     # 周波数 [Hz]
-                'center_position_m': 0.037,   # 中心位置 [m]
+                # x_0（PAM自然位置）が最大端。そこから -2A まで縮む。
+                # 全ストローク = 2 * sine_amplitude_m = 14 mm
+                'sine_amplitude_m': 0.0070,
+                'sine_freq_hz':     1.0,
 
-                # PRESSURIZE ランプ軌道
-                # 原点から center_position_m まで近づく速度 [m/s]。
-                # 小さいほどゆっくり・振動しにくい。大きいほど素早く移動。
-                # 例: 0.005 → 5 mm/s ≒ center=5 mm に 1 秒で到達
-                'ramp_rate_m_s': 0.009,
+                # 振幅ランプ（0 → sine_amplitude_m に到達する速度）
+                # 0.005 m/s → 7 mm 振幅に約 1.4 秒で到達
+                'sine_amp_ramp_rate_m_s': 0.005,
 
                 # 圧力
-                'base_pressure_kpa':   150.0,  # 両室のベース圧力 [kPa]
-                'supply_pressure_kpa': 600.0,  # 圧力指令の上限（供給圧以下に設定）[kPa]
+                'base_pressure_kpa':   150.0,
+                'supply_pressure_kpa': 600.0,
 
-                # 位置ループPID(外側)
-                'pos_kp': 1500.0,   # 比例ゲイン [N/m] #1900
-                'pos_ki': 200.0,   # 積分ゲイン [N/(m·s)] #1200
-                'pos_kd': 0.0,   # 微分ゲイン [N·s/m]
-                'pos_td': 1.0,  # 微分フィルタ時定数 [s]
-                'pos_output_limit': 1000.0,  # 推力指令の上限 [N]
+                # 位置ループ PID（外側）
+                'pos_kp': 1500.0,
+                'pos_ki': 200.0,
+                'pos_kd': 0.0,
+                'pos_td': 1.0,
+                'pos_output_limit': 1000.0,
 
                 # 圧力ループ PI（内側）
-                'pres_kp':  0.03,   # 比例ゲイン [V/kPa]
-                'pres_ki':  0.02,   # 積分ゲイン [V/(kPa·s)]
-                'pres_kd':  0.0,    # 微分ゲイン（通常 0）
-                'pres_td':  0.01,   # 微分フィルタ時定数 [s]
-                # バルブ加算電圧上限 [V]。中立 5V ± この値 → 0.1〜9.9V に収まるよう 4.9 推奨。
+                'pres_kp': 0.03,
+                'pres_ki': 0.02,
+                'pres_kd': 0.0,
+                'pres_td': 0.01,
                 'pres_output_limit': 4.9,
 
-                # ホーミング
-                'homing_settle_threshold': 0.0002,  # 位置変化がこれ以下で安定とみなす [m]
-                'homing_settle_duration':  1.0,     # 安定判定の継続時間 [s]
-                'homing_startup_wait':     0.5,     # 起動直後の待機時間 [s]
+                # ホーミング（両室排気 → PAM自然位置を検出）
+                'homing_settle_threshold': 0.0002,
+                'homing_settle_duration':  1.0,
+                'homing_startup_wait':     0.5,
 
-                # PRESSURIZE → RUNNING 遷移
-                'pressurize_pos_threshold':   0.002,  # 中心との誤差がこれ以下で収束とみなす [m]
-                'pressurize_settle_duration': 0.5,    # 収束判定の継続時間 [s]
-                'use_loadcell_compensation': True,  # ロードセル補償を使用するかどうか
-                'loadcell_ff_gain': 0.4
+                # ロードセル補償（まずはオフで試す）
+                'use_loadcell_compensation': False,
+                'loadcell_ff_gain': 0.4,
+                'loadcell_timeout_s': 0.2,
             }],
         ),
     ])
