@@ -38,7 +38,7 @@ class PIDController:
 
         self.integral += error * dt
         if self.ki > 1e-9:
-            integral_limit = self.output_limit / self.ki
+            integral_limit = 0.1*self.output_limit / self.ki
             self.integral = max(-integral_limit, min(integral_limit, self.integral))
 
         raw_derivative      = (error - self.prev_error) / dt
@@ -102,7 +102,7 @@ class CylinderPositionController(Node):
         self.declare_parameter('sine_freq_hz', 0.5)
         self.declare_parameter('sine_amp_ramp_rate_m_s', 0.010)
 
-        self.declare_parameter('base_pressure_kpa', 250.0)
+        self.declare_parameter('base_pressure_kpa', 150.0)
         self.declare_parameter('supply_pressure_kpa', 600.0)
 
         self.declare_parameter('pos_kp', 2000.0)
@@ -427,7 +427,7 @@ class CylinderPositionController(Node):
     # ────────────────────────────────────────────────────────────
     def _state_waiting_sensor(self, now):
         homing_v = float(self.get_parameter('homing_head_voltage').value)
-        self._send_valve(homing_v, 0.0)
+        self._send_valve(0.0, homing_v)
 
         if self.current_pos is not None:
             self.get_logger().info(
@@ -444,7 +444,7 @@ class CylinderPositionController(Node):
         startup_wait  = float(self.get_parameter('homing_startup_wait').value)
         homing_v      = float(self.get_parameter('homing_head_voltage').value)
 
-        self._send_valve(homing_v, 0.0)
+        self._send_valve(0.0, homing_v)
 
         if now - self.homing_start_time < startup_wait:
             self.homing_last_pos = self.current_pos
