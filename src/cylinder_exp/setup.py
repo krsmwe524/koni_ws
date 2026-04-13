@@ -27,6 +27,7 @@ setup(
     entry_points={
         'console_scripts': [
         'pos_controller = cylinder_exp.pos_controller:main',
+        'pam_const_pressure_controller = cylinder_exp.pam_const_pressure_controller:main',
         ],
     },
 )
