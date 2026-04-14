@@ -38,7 +38,8 @@ class PIDController:
 
         self.integral += error * dt
         if self.ki > 1e-9:
-            integral_limit = 0.1*self.output_limit / self.ki
+            # ── [修正3] 0.1 → 0.3 に緩和 ──
+            integral_limit = 0.3 * self.output_limit / self.ki
             self.integral = max(-integral_limit, min(integral_limit, self.integral))
 
         raw_derivative      = (error - self.prev_error) / dt
@@ -62,7 +63,7 @@ class CylinderPositionController(Node):
     空気圧シリンダ位置制御ノード（PAM接続版）。
 
     ホーミング:
-        ヘッド側 homing_head_voltage / ロッド側 0V
+        ヘッド側 0V / ロッド側 homing_rod_voltage
         → ロッド伸び切り位置 = x_0 = 正弦波の最小端
 
     RUNNING:
@@ -77,6 +78,11 @@ class CylinderPositionController(Node):
         PAMに引っ張られている時 → 負
         F_target = F_pid - gain * F_loadcell
         （F_loadcell が負 → 補償力は正 → 押し出し方向に加算 → 正しい）
+
+    力→圧力の差動分配:
+        目標力Fを面積比で按分し、各室の圧力変化量を算出。
+        ΔpH·AH + |ΔpR|·AR = F が成り立つ。
+        ベース圧力は面積差による静止時オフセットを補正済み。
     """
 
     def __init__(self):
@@ -87,6 +93,11 @@ class CylinderPositionController(Node):
         d_rod = 0.010
         self.AREA_HEAD = math.pi / 4.0 * D_cyl ** 2
         self.AREA_ROD  = math.pi / 4.0 * (D_cyl ** 2 - d_rod ** 2)
+
+        # ── [修正1] 面積比（力の按分用） ─────────────────────────
+        total_area = self.AREA_HEAD + self.AREA_ROD
+        self.RATIO_H = self.AREA_HEAD / total_area
+        self.RATIO_R = self.AREA_ROD  / total_area
 
         self.VALVE_NEUTRAL = 5.0
 
@@ -105,7 +116,8 @@ class CylinderPositionController(Node):
         self.declare_parameter('base_pressure_kpa', 150.0)
         self.declare_parameter('supply_pressure_kpa', 600.0)
 
-        self.declare_parameter('pos_kp', 2000.0)
+        # ── [修正1] pos_kp: 2000→4000（按分で実効ゲインが半減するため補償）──
+        self.declare_parameter('pos_kp', 4000.0)
         self.declare_parameter('pos_ki', 0.0)
         self.declare_parameter('pos_kd', 0.0)
         self.declare_parameter('pos_td', 0.005)
@@ -123,7 +135,7 @@ class CylinderPositionController(Node):
         self.declare_parameter('homing_settle_threshold', 0.0002)
         self.declare_parameter('homing_settle_duration', 1.0)
         self.declare_parameter('homing_startup_wait', 0.5)
-        self.declare_parameter('homing_head_voltage', 6.0)
+        self.declare_parameter('homing_rod_voltage', 6.0)
 
         self.declare_parameter('use_loadcell_compensation', False)
         self.declare_parameter('loadcell_ff_gain', 0.3)
@@ -234,7 +246,8 @@ class CylinderPositionController(Node):
         self.get_logger().info(
             f"Controller initialized. "
             f"outer={outer_rate_hz:.0f}Hz / inner={inner_rate_hz:.0f}Hz. "
-            f"Homing: head={self.get_parameter('homing_head_voltage').value}V, rod=0V. "
+            f"Homing: rod={self.get_parameter('homing_rod_voltage').value}V, head=0V. "
+            f"Force distribution: ratio_H={self.RATIO_H:.3f}, ratio_R={self.RATIO_R:.3f}. "
             f"Waiting for sensors..."
         )
 
@@ -426,12 +439,12 @@ class CylinderPositionController(Node):
     # 各状態の処理
     # ────────────────────────────────────────────────────────────
     def _state_waiting_sensor(self, now):
-        homing_v = float(self.get_parameter('homing_head_voltage').value)
+        homing_v = float(self.get_parameter('homing_rod_voltage').value)
         self._send_valve(0.0, homing_v)
 
         if self.current_pos is not None:
             self.get_logger().info(
-                f"Sensors connected. Homing: head={homing_v}V, rod=0V"
+                f"Sensors connected. Homing: head=0V, rod={homing_v}V"
             )
             self.state = ControllerState.HOMING
             self.homing_start_time = now
@@ -442,7 +455,7 @@ class CylinderPositionController(Node):
         settle_thresh = float(self.get_parameter('homing_settle_threshold').value)
         settle_dur    = float(self.get_parameter('homing_settle_duration').value)
         startup_wait  = float(self.get_parameter('homing_startup_wait').value)
-        homing_v      = float(self.get_parameter('homing_head_voltage').value)
+        homing_v      = float(self.get_parameter('homing_rod_voltage').value)
 
         self._send_valve(0.0, homing_v)
 
@@ -522,11 +535,18 @@ class CylinderPositionController(Node):
         base_kpa = float(self.get_parameter('base_pressure_kpa').value)
         max_kpa  = float(self.get_parameter('supply_pressure_kpa').value)
 
-        delta_pH =  target_force_N / self.AREA_HEAD / 1000.0
-        delta_pR = -target_force_N / self.AREA_ROD  / 1000.0
+        # ── [修正1] 面積比で按分して正確な力を実現 ────────────────
+        # ΔpH·AH = F·RATIO_R,  |ΔpR|·AR = F·RATIO_H
+        # → ΔpH·AH + |ΔpR|·AR = F·(RATIO_R + RATIO_H) = F
+        delta_pH =  (target_force_N * self.RATIO_R) / self.AREA_HEAD / 1000.0
+        delta_pR = -(target_force_N * self.RATIO_H) / self.AREA_ROD  / 1000.0
 
-        target_pH = self._clamp(base_kpa + delta_pH, 0.0, max_kpa)
-        target_pR = self._clamp(base_kpa + delta_pR, 0.0, max_kpa)
+        # ── [修正2] ロッド側ベース圧力を面積比で補正 ─────────────
+        # base·AH - base_rod·AR = 0 となるように
+        base_rod_kpa = base_kpa * self.AREA_HEAD / self.AREA_ROD
+
+        target_pH = self._clamp(base_kpa     + delta_pH, 0.0, max_kpa)
+        target_pR = self._clamp(base_rod_kpa + delta_pR, 0.0, max_kpa)
 
         uH = self.pid_pH.update(target_pH, self.current_pH, dt)
         uR = self.pid_pR.update(target_pR, self.current_pR, dt)
