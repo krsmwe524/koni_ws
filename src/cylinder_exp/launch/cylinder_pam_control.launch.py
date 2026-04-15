@@ -7,7 +7,7 @@ import os
 
 def generate_launch_description():
     bag_dir = os.path.expanduser(
-        f'~/koni_ws/log/{datetime.now().strftime("%Y%m%d_%H%M%S")}')
+        f'~/koni_log/{datetime.now().strftime("%Y%m%d_%H%M%S")}')
     bag_record = ExecuteProcess(
         cmd=[
             'ros2', 'bag', 'record',
