@@ -26,7 +26,7 @@ def generate_launch_description():
     # )
 
     return LaunchDescription([
-        bag_record,
+        #bag_record,
         # AI ボードノード
         Node(
             package='control_box',
@@ -59,10 +59,10 @@ def generate_launch_description():
             output='screen',
             parameters=[{
                 'head_pressure_index':  1,
-                'rod_pressure_index':   3,
+                'rod_pressure_index':   0,
                 'loadcell_plus_index':  2,
                 'loadcell_minus_index': 3,
-                'pam_pressure_index':   4,
+                'pam_pressure_index':   7,
                 'cutoff_hz_pressure':   10.0,
             }],
         ),
@@ -92,15 +92,15 @@ def generate_launch_description():
                 'supply_pressure_kpa': 600.0,
 
                 # 位置ループ PID
-                'pos_kp': 1000.0,
-                'pos_ki': 100.0,
+                'pos_kp': 3500.0, #7500
+                'pos_ki': 1000.0,
                 'pos_kd': 0.0,
                 'pos_td': 1.0,
                 'pos_output_limit': 1000.0,
 
                 # 圧力ループ PI
-                'pres_kp': 0.03,
-                'pres_ki': 0.00,
+                'pres_kp': 0.024,
+                'pres_ki': 0.05,
                 'pres_kd': 0.0,
                 'pres_td': 0.01,
                 'pres_output_limit': 4.9,
@@ -112,7 +112,7 @@ def generate_launch_description():
 
                 # ロードセル補償
                 'use_loadcell_compensation': False,
-                'loadcell_ff_gain':          1.0,
+                'loadcell_ff_gain':          -0.5,
                 'loadcell_timeout_s':        3.2,
             }],
         ),
@@ -128,7 +128,7 @@ def generate_launch_description():
                 'kp':                  0.0, # 0.02
                 'ki':                  0.0, # 0.005
                 'output_limit':        4.9,
-                'valve_channel':       5,
+                'valve_channel':       6,
                 'control_rate_hz':     500.0,
                 'pressure_topic':      '/sensors/pam_pressure',
                 'valve_topic':         '/actuators/pam_valve',

@@ -127,9 +127,14 @@ class SensorInterpreterNode(Node):
             self.pub_rod_kpa.publish(Float32(data=filtered_P_rod))
 
         # PAM圧力センサの処理
+        # if self.pi < len(arr):
+        #     V_pam = float(arr[self.pi])
+        #     raw_P_pam_kPa = (V_pam - self.v0H_press) * self.kpam_press
+        #     filtered_P_pam = self.lpf_pam.update(raw_P_pam_kPa, current_time_sec)
+        #     self.pub_pam_kpa.publish(Float32(data=filtered_P_pam))
         if self.pi < len(arr):
             V_pam = float(arr[self.pi])
-            raw_P_pam_kPa = (V_pam - self.v0H_press) * self.kpam_press
+            raw_P_pam_kPa = (V_pam - self.v0H_press) * self.kH_press
             filtered_P_pam = self.lpf_pam.update(raw_P_pam_kPa, current_time_sec)
             self.pub_pam_kpa.publish(Float32(data=filtered_P_pam))
 
