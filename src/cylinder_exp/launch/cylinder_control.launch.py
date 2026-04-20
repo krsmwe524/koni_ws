@@ -36,8 +36,8 @@ def generate_launch_description():
             name='sensor_interpreter_node',
             output='screen',
             parameters=[{
-                'head_pressure_index': 0,
-                'rod_pressure_index':  1,
+                'head_pressure_index': 1,
+                'rod_pressure_index':  3,
                 'cutoff_hz_pressure' : 10.0,
             }],
         ),
@@ -51,8 +51,8 @@ def generate_launch_description():
             parameters=[{
 
                 # ハードウェア
-                'ch_head': 0,
-                'ch_rod':  1,
+                'ch_head': 1,
+                'ch_rod':  3,
 
                 # ループ周期
                 'outer_rate_hz': 500.0,

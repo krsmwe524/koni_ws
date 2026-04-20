@@ -8,22 +8,22 @@ import os
 def generate_launch_description():
     bag_dir = os.path.expanduser(
         f'~/koni_log/{datetime.now().strftime("%Y%m%d_%H%M%S")}')
-    bag_record = ExecuteProcess(
-        cmd=[
-            'ros2', 'bag', 'record',
-            '-o', bag_dir,
-            '-s', 'mcap',
-            '/actuators/cylinder_valves',
-            '/sensors/cylinder_position',
-            '/sensors/head_pressure',
-            '/sensors/rod_pressure',
-            '/sensors/loadcell_force',
-            '/sensors/pam_pressure',
-            '/actuators/pam_valve',
-            '/debug/pam_valve_output_V',
-        ],
-        output='screen',
-    )
+    # bag_record = ExecuteProcess(
+    #     cmd=[
+    #         'ros2', 'bag', 'record',
+    #         '-o', bag_dir,
+    #         '-s', 'mcap',
+    #         '/actuators/cylinder_valves',
+    #         '/sensors/cylinder_position',
+    #         '/sensors/head_pressure',
+    #         '/sensors/rod_pressure',
+    #         '/sensors/loadcell_force',
+    #         '/sensors/pam_pressure',
+    #         '/actuators/pam_valve',
+    #         '/debug/pam_valve_output_V',
+    #     ],
+    #     output='screen',
+    # )
 
     return LaunchDescription([
         bag_record,
@@ -83,23 +83,23 @@ def generate_launch_description():
                 'inner_rate_hz': 1000.0,
 
                 # 正弦波軌道
-                'sine_amplitude_m':       0.020,
+                'sine_amplitude_m':       0.010,
                 'sine_freq_hz':           1.0,
                 'sine_amp_ramp_rate_m_s': 0.0005,
 
                 # 圧力
-                'base_pressure_kpa':   150.0,
+                'base_pressure_kpa':   250.0,
                 'supply_pressure_kpa': 600.0,
 
                 # 位置ループ PID
-                'pos_kp': 100.0,
-                'pos_ki': 0.0,
+                'pos_kp': 1000.0,
+                'pos_ki': 100.0,
                 'pos_kd': 0.0,
                 'pos_td': 1.0,
                 'pos_output_limit': 1000.0,
 
                 # 圧力ループ PI
-                'pres_kp': 0.0006,
+                'pres_kp': 0.03,
                 'pres_ki': 0.00,
                 'pres_kd': 0.0,
                 'pres_td': 0.01,
