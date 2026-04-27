@@ -108,7 +108,7 @@ def generate_launch_description():
                 'update_rate_hz':      1000.0,
                 'startup_wait_s':      6.0,    # PAM圧力安定化のための待機
                 'startup_head_voltage_v': 0.0,  # 待機中のヘッド側
-                'startup_rod_voltage_v':  6.0,  # 待機中のロッド側
+                'startup_rod_voltage_v':  8.0,  # 待機中のロッド側
                 'amp_ramp_duration_s': 1.0,    # 振幅 0 → A をかけるランプ時間
 
                 # 系列の終了挙動
@@ -143,10 +143,10 @@ def generate_launch_description():
             output='screen',
             parameters=[{
                 'output_rate_hz': 1000.0,
-                # M系列ドライバの初回指令前から ch2(rod)=6V, ch3(head)=0V。
+                # M系列ドライバの初回指令前から ch2(rod)=8V, ch3(head)=0V。
                 # 他chは従来通り 5V 中立で初期化。
                 'initial_voltages': [
-                    5.0, 5.0, 6.0, 0.0,
+                    5.0, 5.0, 8.0, 0.0,
                     5.0, 5.0, 5.0, 5.0,
                 ],
                 'input_topics': [
