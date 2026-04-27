@@ -24,14 +24,19 @@ def generate_launch_description():
             name='cnt3204mtlpe_node',
             output='screen'
         ),
+        # 信号変換・フィルタノード
         Node(
             package='py_signal_processing',
             executable='analog_voltage_interpreter_cyl',
             name='sensor_interpreter_node',
             output='screen',
             parameters=[{
-                'head_pressure_index': 0,
-                'rod_pressure_index': 1,
-            }]
+                'head_pressure_index':  1,
+                'rod_pressure_index':   0,
+                'loadcell_plus_index':  2,
+                'loadcell_minus_index': 3,
+                'pam_pressure_index':   7,
+                'cutoff_hz_pressure':   10.0,
+            }],
         ),
     ])

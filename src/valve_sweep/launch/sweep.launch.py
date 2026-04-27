@@ -47,10 +47,10 @@ def generate_launch_description():
             name='valve_sweep_node',
             output='screen',
             parameters=[{
-                'valve_channel':    1, #1と3 1はヘッド 3はロッド
+                'valve_channel':  2, #1と3 1はヘッド 3はロッド
                 'flowmeter_channel': 6, #流量計のチャンネル
-                'v_start':          4.5,
-                'v_end':            5.5,
+                'v_start':          3.0,
+                'v_end':            6.5,
                 'v_step':           0.05,
                 'hold_time_s':      2.0,
                 'control_rate_hz':  100.0,

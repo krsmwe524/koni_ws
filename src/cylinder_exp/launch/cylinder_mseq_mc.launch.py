@@ -45,7 +45,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        bag_record,
+       # bag_record,
 
         # AI ボードノード
         Node(
@@ -99,10 +99,10 @@ def generate_launch_description():
                 'ch_rod':  3,
 
                 # M系列差動駆動
-                'amplitude_v':         0.5,    # A [V] (1V前後を目安)
+                'amplitude_v':         1.0,    # A [V] (1V前後を目安)
                 'mseq_order':          12,     # n=12 → 系列長 4095
                 'mseq_clock_period_s': 0.010,  # T_c = 10ms (1kHzサンプリングで10サンプル毎に切替)
-                'mseq_seed':           1,      # 訓練用シード (評価用は別 launch で 2 などに)
+                'mseq_seed':           2,      # 訓練用シード (評価用は別 launch で 2 などに)
 
                 # タイミング
                 'update_rate_hz':      1000.0,
@@ -123,8 +123,8 @@ def generate_launch_description():
             output='screen',
             parameters=[{
                 'target_pressure_kpa': 100.0,
-                'kp':                  0.0,  # 0.02
-                'ki':                  0.0,  # 0.005
+                'kp':                  0.0,  # 0.05
+                'ki':                  0.0,  # 0.08
                 'output_limit':        4.9,
                 'valve_channel':       6,
                 'control_rate_hz':     500.0,
