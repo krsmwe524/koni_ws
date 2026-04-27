@@ -95,23 +95,23 @@ def generate_launch_description():
             output='screen',
             parameters=[{
                 # AOボードとの接続チャンネル
-                'ch_head': 1,
-                'ch_rod':  3,
+                'ch_head': 3,
+                'ch_rod':  2,
 
                 # M系列差動駆動
-                'amplitude_v':         1.0,    # A [V] (1V前後を目安)
+                'amplitude_v':         0.6,    # A [V] (1V前後を目安)
                 'mseq_order':          12,     # n=12 → 系列長 4095
-                'mseq_clock_period_s': 0.010,  # T_c = 10ms (1kHzサンプリングで10サンプル毎に切替)
+                'mseq_clock_period_s': 0.05,  # T_c = 10ms (1kHzサンプリングで10サンプル毎に切替)
                 'mseq_seed':           2,      # 訓練用シード (評価用は別 launch で 2 などに)
 
                 # タイミング
                 'update_rate_hz':      1000.0,
-                'startup_wait_s':      3.0,    # PAM圧力安定化のための待機
+                'startup_wait_s':      6.0,    # PAM圧力安定化のための待機
                 'amp_ramp_duration_s': 1.0,    # 振幅 0 → A をかけるランプ時間
 
                 # 系列の終了挙動
-                'loop_sequence':       True,   # 1周完了後ループするか
-                'max_cycles':          0,      # 0=無制限 / 1サイクル=4095*0.01=40.95s
+                'loop_sequence':       False,   # 1周完了後ループするか
+                'max_cycles':          1,      # 0=無制限 / 1サイクル=4095*0.01=40.95s
             }],
         ),
 
@@ -123,11 +123,11 @@ def generate_launch_description():
             output='screen',
             parameters=[{
                 'target_pressure_kpa': 100.0,
-                'kp':                  0.0,  # 0.05
-                'ki':                  0.0,  # 0.08
+                'kp':                  0.07,  # 0.05
+                'ki':                  0.2,  # 0.08
                 'output_limit':        4.9,
-                'valve_channel':       6,
-                'control_rate_hz':     500.0,
+                'valve_channel':       1,
+                'control_rate_hz':     1000.0,
                 'pressure_topic':      '/sensors/pam_pressure',
                 'valve_topic':         '/actuators/pam_valve',
             }],
