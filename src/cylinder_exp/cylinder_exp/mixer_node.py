@@ -27,12 +27,18 @@ class ValveMixer(Node):
             '/actuators/cylinder_valves',
             '/actuators/pam_valve',
         ])
+        self.declare_parameter(
+            'initial_voltages',
+            [self.VALVE_NEUTRAL] * self.NUM_CHANNELS)
 
         rate_hz      = float(self.get_parameter('output_rate_hz').value)
         input_topics = self.get_parameter('input_topics').value
+        initial_voltages = self.get_parameter('initial_voltages').value
 
-        # 各チャンネルの最新電圧（中立で初期化）
+        # 各チャンネルの最新電圧（中立で初期化し、指定があれば上書き）
         self._voltages = [self.VALVE_NEUTRAL] * self.NUM_CHANNELS
+        for ch, volt in enumerate(initial_voltages[:self.NUM_CHANNELS]):
+            self._voltages[ch] = max(0.0, min(10.0, float(volt)))
 
         # 出力パブリッシャ
         self.pub_valve = self.create_publisher(
@@ -51,7 +57,8 @@ class ValveMixer(Node):
         self.get_logger().info(
             f"ValveMixer started. "
             f"output_rate={rate_hz:.0f}Hz, "
-            f"inputs={input_topics}"
+            f"inputs={input_topics}, "
+            f"initial_voltages={self._voltages}"
         )
 
     def _make_callback(self, topic):

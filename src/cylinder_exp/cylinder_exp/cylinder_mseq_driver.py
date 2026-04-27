@@ -39,6 +39,7 @@ class CylinderMSeqDriver(Node):
 
         self.declare_parameter('update_rate_hz',      1000.0)
         self.declare_parameter('startup_wait_s',      3.0)
+        self.declare_parameter('startup_voltage_v',   self.VALVE_NEUTRAL)
         self.declare_parameter('amp_ramp_duration_s', 1.0)
 
         self.declare_parameter('loop_sequence', True)
@@ -55,6 +56,7 @@ class CylinderMSeqDriver(Node):
 
         update_hz            = float(self.get_parameter('update_rate_hz').value)
         self.startup_wait_s  = float(self.get_parameter('startup_wait_s').value)
+        self.startup_voltage = float(self.get_parameter('startup_voltage_v').value)
         self.ramp_duration_s = float(self.get_parameter('amp_ramp_duration_s').value)
 
         self.loop_seq        = bool(self.get_parameter('loop_sequence').value)
@@ -89,7 +91,8 @@ class CylinderMSeqDriver(Node):
             f"A={self.A_target:.3f}V, ch_head={self.CH_HEAD}, ch_rod={self.CH_ROD}, "
             f"seed={seed}, cycle_duration={self.seq_len * self.T_c:.2f}s, "
             f"loop={self.loop_seq}, max_cycles={self.max_cycles}, "
-            f"startup_wait={self.startup_wait_s:.1f}s"
+            f"startup_wait={self.startup_wait_s:.1f}s, "
+            f"startup_voltage={self.startup_voltage:.3f}V"
         )
 
     # ── ユーティリティ ───────────────────────────────────────────
@@ -122,6 +125,9 @@ class CylinderMSeqDriver(Node):
     def _send_neutral(self):
         self._send_valve(self.VALVE_NEUTRAL, self.VALVE_NEUTRAL)
 
+    def _send_startup_voltage(self):
+        self._send_valve(self.startup_voltage, self.startup_voltage)
+
     # ── メインループ ─────────────────────────────────────────────
     def _update(self):
         now = time.monotonic()
@@ -132,7 +138,7 @@ class CylinderMSeqDriver(Node):
 
         # スタートアップ待機（PAM圧力安定化用）
         if elapsed < self.startup_wait_s:
-            self._send_neutral()
+            self._send_startup_voltage()
             self.pub_mseq.publish(Float32(data=0.0))
             self.pub_cycle.publish(Int32(data=0))
             self.pub_amp.publish(Float32(data=0.0))
