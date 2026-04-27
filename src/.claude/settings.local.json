@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c \"import ast; ast.parse\\(open\\('/Users/konishiryou/koni_ws/src/cylinder_exp/cylinder_exp/pam_const_pressure_controller.py'\\).read\\(\\)\\); print\\('OK'\\)\")"
+    ]
+  }
+}
