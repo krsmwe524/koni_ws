@@ -40,6 +40,8 @@ class CylinderMSeqDriver(Node):
         self.declare_parameter('update_rate_hz',      1000.0)
         self.declare_parameter('startup_wait_s',      3.0)
         self.declare_parameter('startup_voltage_v',   self.VALVE_NEUTRAL)
+        self.declare_parameter('startup_head_voltage_v', -1.0)
+        self.declare_parameter('startup_rod_voltage_v',  -1.0)
         self.declare_parameter('amp_ramp_duration_s', 1.0)
 
         self.declare_parameter('loop_sequence', True)
@@ -57,6 +59,14 @@ class CylinderMSeqDriver(Node):
         update_hz            = float(self.get_parameter('update_rate_hz').value)
         self.startup_wait_s  = float(self.get_parameter('startup_wait_s').value)
         self.startup_voltage = float(self.get_parameter('startup_voltage_v').value)
+        startup_head_param   = self.get_parameter('startup_head_voltage_v').value
+        startup_rod_param    = self.get_parameter('startup_rod_voltage_v').value
+        self.startup_head_voltage = (
+            self.startup_voltage if startup_head_param < 0.0 else float(startup_head_param)
+        )
+        self.startup_rod_voltage = (
+            self.startup_voltage if startup_rod_param < 0.0 else float(startup_rod_param)
+        )
         self.ramp_duration_s = float(self.get_parameter('amp_ramp_duration_s').value)
 
         self.loop_seq        = bool(self.get_parameter('loop_sequence').value)
@@ -92,7 +102,8 @@ class CylinderMSeqDriver(Node):
             f"seed={seed}, cycle_duration={self.seq_len * self.T_c:.2f}s, "
             f"loop={self.loop_seq}, max_cycles={self.max_cycles}, "
             f"startup_wait={self.startup_wait_s:.1f}s, "
-            f"startup_voltage={self.startup_voltage:.3f}V"
+            f"startup_head={self.startup_head_voltage:.3f}V, "
+            f"startup_rod={self.startup_rod_voltage:.3f}V"
         )
 
     # ── ユーティリティ ───────────────────────────────────────────
@@ -126,7 +137,7 @@ class CylinderMSeqDriver(Node):
         self._send_valve(self.VALVE_NEUTRAL, self.VALVE_NEUTRAL)
 
     def _send_startup_voltage(self):
-        self._send_valve(self.startup_voltage, self.startup_voltage)
+        self._send_valve(self.startup_head_voltage, self.startup_rod_voltage)
 
     # ── メインループ ─────────────────────────────────────────────
     def _update(self):
