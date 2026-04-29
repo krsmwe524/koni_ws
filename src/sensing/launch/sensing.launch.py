@@ -20,7 +20,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        # bag_record,
+        bag_record,
 
         # AIボードノード
         Node(
@@ -43,8 +43,8 @@ def generate_launch_description():
                 'v0_pressure':           1.0,
                 'slope_kPa_per_V':       250.0,
                 # ロードセル (ch・ゲインは実機に合わせて変更)
-                'loadcell_plus_index':   2,
-                'loadcell_minus_index':  3,
+                'loadcell_plus_index':   4,
+                'loadcell_minus_index':  5,
                 'v0_loadcell':           0.0,
                 'kg_per_V_loadcell':     7.9186,
                 'gravity_acceleration':  9.80665,
@@ -53,8 +53,8 @@ def generate_launch_description():
                 'pos_fullscale_v':       5.0,
                 'pos_fullscale_mm':      1000.0,
                 # EMG (ch1: 三角筋, ch2: 上腕三頭筋)
-                'emg_deltoid_index':     0,
-                'emg_triceps_index':     1,
+                'emg_deltoid_index':     1,
+                'emg_triceps_index':     2,
                 'emg_rms_window_ms':     500,
             }],
         ),
