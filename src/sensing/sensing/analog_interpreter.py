@@ -15,6 +15,8 @@ class AnalogInterpreterNode(Node):
       /sensors/pressure         : Float32 [kPa]  ch7 圧力センサ (フィルタなし)
       /sensors/loadcell_force   : Float32 [N]     ロードセル (フィルタなし)
       /sensors/wire_position_mm : Float32 [mm]    ch6 ワイヤ式長さセンサ (フィルタなし)
+      /sensors/emg_deltoid_raw  : Float32 [V]     ch1 三角筋 EMG 生値
+      /sensors/emg_triceps_raw  : Float32 [V]     ch2 上腕三頭筋 EMG 生値
       /RMS/deltoid              : Float32         ch1 三角筋 EMG RMS (500ms窓)
       /RMS/triceps              : Float32         ch2 上腕三頭筋 EMG RMS (500ms窓)
     """
@@ -75,8 +77,12 @@ class AnalogInterpreterNode(Node):
         self.pub_pressure = self.create_publisher(Float32, '/sensors/pressure', 10)
         self.pub_loadcell = self.create_publisher(Float32, '/sensors/loadcell_force', 10)
         self.pub_wire     = self.create_publisher(Float32, '/sensors/wire_position_mm', 10)
-        self.pub_deltoid  = self.create_publisher(Float32, '/RMS/deltoid', 10)
-        self.pub_triceps  = self.create_publisher(Float32, '/RMS/triceps', 10)
+        self.pub_emg_deltoid_raw = self.create_publisher(
+            Float32, '/sensors/emg_deltoid_raw', 10)
+        self.pub_emg_triceps_raw = self.create_publisher(
+            Float32, '/sensors/emg_triceps_raw', 10)
+        self.pub_deltoid = self.create_publisher(Float32, '/RMS/deltoid', 10)
+        self.pub_triceps = self.create_publisher(Float32, '/RMS/triceps', 10)
 
         self.create_subscription(Float32MultiArray, ai_topic, self._cb_voltage, 10)
 
@@ -110,11 +116,13 @@ class AnalogInterpreterNode(Node):
 
         # EMG RMS
         if self._emg_d_idx < len(arr):
-            self._update_rms(self._buf_deltoid, float(arr[self._emg_d_idx]), now_ns,
-                             self.pub_deltoid)
+            emg_deltoid = float(arr[self._emg_d_idx])
+            self.pub_emg_deltoid_raw.publish(Float32(data=emg_deltoid))
+            self._update_rms(self._buf_deltoid, emg_deltoid, now_ns, self.pub_deltoid)
         if self._emg_t_idx < len(arr):
-            self._update_rms(self._buf_triceps, float(arr[self._emg_t_idx]), now_ns,
-                             self.pub_triceps)
+            emg_triceps = float(arr[self._emg_t_idx])
+            self.pub_emg_triceps_raw.publish(Float32(data=emg_triceps))
+            self._update_rms(self._buf_triceps, emg_triceps, now_ns, self.pub_triceps)
 
     def _update_rms(self, buf: collections.deque, value: float, now_ns: int, publisher):
         buf.append((now_ns, value))

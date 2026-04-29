@@ -14,12 +14,12 @@ def generate_launch_description():
             'ros2', 'bag', 'record',
             '-o', bag_dir,
             '-s', 'mcap',
-            '-e', '/sensors/.*',
+            '-e', '/(sensors|RMS)/.*',
         ],
         output='screen',
     )
 
-    return LaunchDescription([
+    return LaunchDescriptiorn([
         bag_record,
 
         # AIボードノード
