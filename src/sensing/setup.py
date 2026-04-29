@@ -53,6 +53,7 @@ setup(
     entry_points={
         'console_scripts': [
             'data_logger = sensing.data_logger:main',
+            'analog_interpreter = sensing.analog_interpreter:main',
         ],
     },
 )
