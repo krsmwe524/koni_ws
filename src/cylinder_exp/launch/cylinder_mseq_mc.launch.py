@@ -45,8 +45,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-       # bag_record,
-
+       bag_record,
         # AI ボードノード
         Node(
             package='control_box',
@@ -112,7 +111,7 @@ def generate_launch_description():
                 'amp_ramp_duration_s': 1.0,    # 振幅 0 → A をかけるランプ時間
 
                 # 系列の終了挙動
-                'loop_sequence':       False,   # 1周完了後ループするか
+                'loop_sequence':       True,   # 1周完了後ループするか
                 'max_cycles':          1,      # 0=無制限 / 1サイクル=4095*0.01=40.95s
             }],
         ),
