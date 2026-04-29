@@ -7,7 +7,7 @@ import os
 
 def generate_launch_description():
     bag_dir = os.path.expanduser(
-        f'~/koni_ws/log_{datetime.now().strftime("%Y%m%d_%H%M%S")}')
+        f'~/koni_log/MVC_{datetime.now().strftime("%Y%m%d_%H%M%S")}')
 
     bag_record = ExecuteProcess(
         cmd=[
@@ -20,7 +20,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        # bag_record,
+        bag_record,
 
         # AIボードノード
         Node(
