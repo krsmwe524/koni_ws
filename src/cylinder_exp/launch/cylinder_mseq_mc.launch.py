@@ -99,6 +99,8 @@ def generate_launch_description():
 
                 # M系列差動駆動
                 'amplitude_v':         0.8,    # A [V] (1V前後を目安)
+                'neutral_head_voltage_v': 5.0,  # M系列駆動中・終了後のヘッド側中立電圧
+                'neutral_rod_voltage_v':  5.3,  # M系列駆動中・終了後のロッド側中立電圧
                 'mseq_order':          9,     # n=12 → 系列長 4095
                 'mseq_clock_period_s': 0.1,  # T_c = 10ms (1kHzサンプリングで10サンプル毎に切替)
                 'mseq_seed':           1,      # 訓練用シード (評価用は別 launch で 2 などに)

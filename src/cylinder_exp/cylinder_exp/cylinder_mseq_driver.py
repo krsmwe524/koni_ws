@@ -10,8 +10,8 @@ class CylinderMSeqDriver(Node):
     """
     シリンダ2弁を M系列で差動駆動する開ループドライバ。
 
-        V_head(t) = 5.0 + A * m(t)
-        V_rod(t)  = 5.0 - A * m(t)
+        V_head(t) = V_neutral_head + A * m(t)
+        V_rod(t)  = V_neutral_rod  - A * m(t)
         m(t) ∈ {-1, +1}  (M系列, クロック周期 T_c で更新)
 
     出力:
@@ -23,7 +23,7 @@ class CylinderMSeqDriver(Node):
       /debug/cylinder_v_rod      : Float32
     """
 
-    VALVE_NEUTRAL = 5.0
+    VALVE_NEUTRAL_DEFAULT = 5.0
 
     def __init__(self):
         super().__init__('cylinder_mseq_driver')
@@ -33,13 +33,15 @@ class CylinderMSeqDriver(Node):
         self.declare_parameter('ch_rod',  3)
 
         self.declare_parameter('amplitude_v',         1.0)
+        self.declare_parameter('neutral_head_voltage_v', self.VALVE_NEUTRAL_DEFAULT)
+        self.declare_parameter('neutral_rod_voltage_v',  self.VALVE_NEUTRAL_DEFAULT)
         self.declare_parameter('mseq_order',          12)
         self.declare_parameter('mseq_clock_period_s', 0.010)
         self.declare_parameter('mseq_seed',           1)
 
         self.declare_parameter('update_rate_hz',      1000.0)
         self.declare_parameter('startup_wait_s',      3.0)
-        self.declare_parameter('startup_voltage_v',   self.VALVE_NEUTRAL)
+        self.declare_parameter('startup_voltage_v',   -1.0)
         self.declare_parameter('startup_head_voltage_v', -1.0)
         self.declare_parameter('startup_rod_voltage_v',  -1.0)
         self.declare_parameter('amp_ramp_duration_s', 1.0)
@@ -52,20 +54,30 @@ class CylinderMSeqDriver(Node):
         self.CH_ROD  = int(self.get_parameter('ch_rod').value)
 
         self.A_target        = float(self.get_parameter('amplitude_v').value)
+        self.neutral_head_voltage = float(
+            self.get_parameter('neutral_head_voltage_v').value)
+        self.neutral_rod_voltage = float(
+            self.get_parameter('neutral_rod_voltage_v').value)
         self.n               = int(self.get_parameter('mseq_order').value)
         self.T_c             = float(self.get_parameter('mseq_clock_period_s').value)
         seed                 = int(self.get_parameter('mseq_seed').value)
 
         update_hz            = float(self.get_parameter('update_rate_hz').value)
         self.startup_wait_s  = float(self.get_parameter('startup_wait_s').value)
-        self.startup_voltage = float(self.get_parameter('startup_voltage_v').value)
+        startup_common_param = float(self.get_parameter('startup_voltage_v').value)
         startup_head_param   = self.get_parameter('startup_head_voltage_v').value
         startup_rod_param    = self.get_parameter('startup_rod_voltage_v').value
         self.startup_head_voltage = (
-            self.startup_voltage if startup_head_param < 0.0 else float(startup_head_param)
+            self.neutral_head_voltage if startup_common_param < 0.0 else startup_common_param
+        )
+        self.startup_head_voltage = (
+            self.startup_head_voltage if startup_head_param < 0.0 else float(startup_head_param)
         )
         self.startup_rod_voltage = (
-            self.startup_voltage if startup_rod_param < 0.0 else float(startup_rod_param)
+            self.neutral_rod_voltage if startup_common_param < 0.0 else startup_common_param
+        )
+        self.startup_rod_voltage = (
+            self.startup_rod_voltage if startup_rod_param < 0.0 else float(startup_rod_param)
         )
         self.ramp_duration_s = float(self.get_parameter('amp_ramp_duration_s').value)
 
@@ -99,6 +111,8 @@ class CylinderMSeqDriver(Node):
             f"CylinderMSeqDriver started. "
             f"n={self.n}, len={self.seq_len}, T_c={self.T_c*1000:.1f}ms, "
             f"A={self.A_target:.3f}V, ch_head={self.CH_HEAD}, ch_rod={self.CH_ROD}, "
+            f"neutral_head={self.neutral_head_voltage:.3f}V, "
+            f"neutral_rod={self.neutral_rod_voltage:.3f}V, "
             f"seed={seed}, cycle_duration={self.seq_len * self.T_c:.2f}s, "
             f"loop={self.loop_seq}, max_cycles={self.max_cycles}, "
             f"startup_wait={self.startup_wait_s:.1f}s, "
@@ -134,7 +148,7 @@ class CylinderMSeqDriver(Node):
         self.pub_v_rod.publish(Float32(data=float(v_rod)))
 
     def _send_neutral(self):
-        self._send_valve(self.VALVE_NEUTRAL, self.VALVE_NEUTRAL)
+        self._send_valve(self.neutral_head_voltage, self.neutral_rod_voltage)
 
     def _send_startup_voltage(self):
         self._send_valve(self.startup_head_voltage, self.startup_rod_voltage)
@@ -183,8 +197,8 @@ class CylinderMSeqDriver(Node):
         else:
             A = self.A_target
 
-        v_head = self.VALVE_NEUTRAL + A * m
-        v_rod  = self.VALVE_NEUTRAL - A * m
+        v_head = self.neutral_head_voltage + A * m
+        v_rod  = self.neutral_rod_voltage - A * m
 
         self._send_valve(v_head, v_rod)
         self.pub_mseq.publish(Float32(data=m))
@@ -200,12 +214,7 @@ def main(args=None):
     except KeyboardInterrupt:
         node.get_logger().info("Shutting down...")
     finally:
-        msg = Float32MultiArray()
-        msg.data = [
-            float(node.CH_HEAD), CylinderMSeqDriver.VALVE_NEUTRAL,
-            float(node.CH_ROD),  CylinderMSeqDriver.VALVE_NEUTRAL,
-        ]
-        node.pub_valve.publish(msg)
+        node._send_neutral()
         node.destroy_node()
         rclpy.shutdown()
 
