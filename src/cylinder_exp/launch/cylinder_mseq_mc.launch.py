@@ -45,7 +45,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-       bag_record,
+       # bag_record,
         # AI ボードノード
         Node(
             package='control_box',
@@ -99,9 +99,9 @@ def generate_launch_description():
 
                 # M系列差動駆動
                 'amplitude_v':         0.8,    # A [V] (1V前後を目安)
-                'mseq_order':          12,     # n=12 → 系列長 4095
-                'mseq_clock_period_s': 0.02,  # T_c = 10ms (1kHzサンプリングで10サンプル毎に切替)
-                'mseq_seed':           2,      # 訓練用シード (評価用は別 launch で 2 などに)
+                'mseq_order':          9,     # n=12 → 系列長 4095
+                'mseq_clock_period_s': 0.1,  # T_c = 10ms (1kHzサンプリングで10サンプル毎に切替)
+                'mseq_seed':           1,      # 訓練用シード (評価用は別 launch で 2 などに)
 
                 # タイミング
                 'update_rate_hz':      1000.0,
