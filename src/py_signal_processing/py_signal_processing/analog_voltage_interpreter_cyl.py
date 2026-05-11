@@ -15,6 +15,7 @@ class SensorInterpreterNode(Node):
       /sensors/rod_pressure      : Float32 [kPa] (ロッド側圧力)
       /sensors/loadcell_force    : Float32 [N]   (ロードセルの力)
       /sensors/pam_pressure      : Float32 [kPa] (PAM圧力)
+      /sensors/supply_pressure   : Float32 [kPa] (供給圧力)
     """
     def __init__(self):
         super().__init__('sensor_interpreter')
@@ -31,11 +32,14 @@ class SensorInterpreterNode(Node):
         self.declare_parameter('head_pressure_index', 0)
         self.declare_parameter('rod_pressure_index', 1)
         self.declare_parameter('pam_pressure_index', 5)
+        self.declare_parameter('supply_pressure_index', 4)
         self.declare_parameter('v0_pressure_head', 1.0)
         self.declare_parameter('v0_pressure_rod', 1.0)
+        self.declare_parameter('v0_pressure_supply', 1.0)
         self.declare_parameter('slope_kPa_per_V_head', 250.0)
         self.declare_parameter('slope_kPa_per_V_rod', 250.0)
         self.declare_parameter('slope_kPa_per_V_pam', 25.25)
+        self.declare_parameter('slope_kPa_per_V_supply', 250.0)
         self.declare_parameter('cutoff_hz_pressure', 20.0)
 
         # ロードセル
@@ -56,11 +60,14 @@ class SensorInterpreterNode(Node):
         self.hi          = self.get_parameter('head_pressure_index').value
         self.ri          = self.get_parameter('rod_pressure_index').value
         self.pi          = self.get_parameter('pam_pressure_index').value
+        self.si          = self.get_parameter('supply_pressure_index').value
         self.v0H_press   = self.get_parameter('v0_pressure_head').value
         self.v0R_press   = self.get_parameter('v0_pressure_rod').value
+        self.v0S_press   = self.get_parameter('v0_pressure_supply').value
         self.kH_press    = self.get_parameter('slope_kPa_per_V_head').value
         self.kR_press    = self.get_parameter('slope_kPa_per_V_rod').value
         self.kpam_press  = self.get_parameter('slope_kPa_per_V_pam').value
+        self.kS_press    = self.get_parameter('slope_kPa_per_V_supply').value
         self.cutoff_pres = self.get_parameter('cutoff_hz_pressure').value
 
         self.lc_p_idx    = self.get_parameter('loadcell_plus_index').value
@@ -70,17 +77,19 @@ class SensorInterpreterNode(Node):
         self.gravity     = self.get_parameter('gravity_acceleration').value
         self.cutoff_lc   = self.get_parameter('cutoff_hz_loadcell').value
 
-        self.lpf_enc  = LowPassFilter(self.cutoff_enc)
-        self.lpf_head = LowPassFilter(self.cutoff_pres)
-        self.lpf_rod  = LowPassFilter(self.cutoff_pres)
-        self.lpf_pam  = LowPassFilter(self.cutoff_pres)
-        self.lpf_lc   = LowPassFilter(self.cutoff_lc)
+        self.lpf_enc    = LowPassFilter(self.cutoff_enc)
+        self.lpf_head   = LowPassFilter(self.cutoff_pres)
+        self.lpf_rod    = LowPassFilter(self.cutoff_pres)
+        self.lpf_pam    = LowPassFilter(self.cutoff_pres)
+        self.lpf_supply = LowPassFilter(self.cutoff_pres)
+        self.lpf_lc     = LowPassFilter(self.cutoff_lc)
 
         self.pub_pos_m      = self.create_publisher(Float32, '/sensors/cylinder_position', 10)
         self.pub_head_kpa   = self.create_publisher(Float32, '/sensors/head_pressure', 10)
         self.pub_rod_kpa    = self.create_publisher(Float32, '/sensors/rod_pressure', 10)
         self.pub_loadcell_n = self.create_publisher(Float32, '/sensors/loadcell_force', 10)
         self.pub_pam_kpa    = self.create_publisher(Float32, '/sensors/pam_pressure', 10)
+        self.pub_supply_kpa = self.create_publisher(Float32, '/sensors/supply_pressure', 10)
 
         self.sub_cnt = self.create_subscription(Float32MultiArray, self.cnt_topic, self._cb_count, 10)
         self.sub_ai  = self.create_subscription(Float32MultiArray, self.ai_topic, self._cb_voltage, 10)
@@ -137,6 +146,13 @@ class SensorInterpreterNode(Node):
             raw_P_pam_kPa = (V_pam - self.v0H_press) * self.kH_press
             filtered_P_pam = self.lpf_pam.update(raw_P_pam_kPa, current_time_sec)
             self.pub_pam_kpa.publish(Float32(data=filtered_P_pam))
+
+        # 供給圧力センサの処理
+        if self.si < len(arr):
+            V_supply = float(arr[self.si])
+            raw_P_supply_kPa = (V_supply - self.v0S_press) * self.kS_press
+            filtered_P_supply = self.lpf_supply.update(raw_P_supply_kPa, current_time_sec)
+            self.pub_supply_kpa.publish(Float32(data=filtered_P_supply))
 
         # --- ロードセルの処理 ---
         if self.lc_p_idx < len(arr) and self.lc_m_idx < len(arr):

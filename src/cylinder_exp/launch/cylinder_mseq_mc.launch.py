@@ -30,6 +30,7 @@ def generate_launch_description():
             '/sensors/rod_pressure',
             '/sensors/loadcell_force',
             '/sensors/pam_pressure',
+            '/sensors/supply_pressure',
             # M系列ドライバのデバッグ
             '/debug/mseq_value',
             '/debug/mseq_cycle_index',
