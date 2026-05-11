@@ -7,7 +7,7 @@ import os
 
 def generate_launch_description():
     bag_dir = os.path.expanduser(
-        f'~/koni_log/exp_{datetime.now().strftime("%Y%m%d_%H%M%S")}')
+        f'~/koni_log/wakai_MVC2_{datetime.now().strftime("%Y%m%d_%H%M%S")}')
 
     bag_record = ExecuteProcess(
         cmd=[
@@ -20,7 +20,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-       bag_record,
+      # bag_record,
 
         # AIボードノード
         Node(
@@ -52,7 +52,7 @@ def generate_launch_description():
                 'wire_index':            6,
                 'pos_fullscale_v':       5.0,
                 'pos_fullscale_mm':      1000.0,
-                # EMG (ch1: 三角筋, ch2: 上腕三頭筋)
+                # EMG (ch0: 三角筋, ch1: 上腕三頭筋)
                 'emg_deltoid_index':     0,
                 'emg_triceps_index':     1,
                 'emg_rms_window_ms':     500,

@@ -13,7 +13,7 @@ def generate_launch_description():
     PAM 側   : pam_const_pressure_controller で圧力一定制御 (ch6)
     """
     bag_dir = os.path.expanduser(
-        f'~/koni_log/mc_{datetime.now().strftime("%Y%m%d_%H%M%S")}')
+        f'~/koni_log/MC_{datetime.now().strftime("%Y%m%d_%H%M%S")}')
 
     bag_record = ExecuteProcess(
         cmd=[
@@ -33,7 +33,7 @@ def generate_launch_description():
             # M系列ドライバのデバッグ
             '/debug/mseq_value',
             '/debug/mseq_cycle_index',
-            '/debug/mseq_amplitude_v',
+            # '/debug/mseq_amplitude_v',
             '/debug/cylinder_v_head',
             '/debug/cylinder_v_rod',
             # PAM 定圧制御のデバッグ
@@ -45,7 +45,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-       bag_record,
+        bag_record,
         # AI ボードノード
         Node(
             package='control_box',
@@ -99,11 +99,11 @@ def generate_launch_description():
 
                 # M系列差動駆動
                 'amplitude_v':         0.8,    # A [V] (1V前後を目安)
-                'neutral_head_voltage_v': 5.0,  # M系列駆動中・終了後のヘッド側中立電圧
-                'neutral_rod_voltage_v':  5.5,  # M系列駆動中・終了後のロッド側中立電圧
+                'neutral_head_voltage_v': 4.5,  # M系列駆動中・終了後のヘッド側中立電圧
+                'neutral_rod_voltage_v':  6.5,  # M系列駆動中・終了後のロッド側中立電圧
                 'mseq_order':          9,     # n=12 → 系列長 4095
                 'mseq_clock_period_s': 0.1,  # T_c = 10ms (1kHzサンプリングで10サンプル毎に切替)
-                'mseq_seed':           1,      # 訓練用シード (評価用は別 launch で 2 などに)
+                'mseq_seed':           5,      # 訓練用シード (評価用は別 launch で 2 などに)
 
                 # タイミング
                 'update_rate_hz':      1000.0,
@@ -114,7 +114,7 @@ def generate_launch_description():
 
                 # 系列の終了挙動
                 'loop_sequence':       True,   # 1周完了後ループするか
-                'max_cycles':          2,      # 0=無制限 / 1サイクル=4095*0.01=40.95s
+                'max_cycles':          1,      # 0=無制限 / 1サイクル=4095*0.01=40.95s
             }],
         ),
 
@@ -125,8 +125,8 @@ def generate_launch_description():
             name='pam_const_pressure_controller_node',
             output='screen',
             parameters=[{
-                'target_pressure_kpa': 50.0,
-                'kp':                  0.04,  # 0.05
+                'target_pressure_kpa': 100.0,
+                'kp':                  0.045,  # 0.05
                 'ki':                  0.015,  # 0.08
                 'output_limit':        4.9,
                 'valve_channel':       1,
