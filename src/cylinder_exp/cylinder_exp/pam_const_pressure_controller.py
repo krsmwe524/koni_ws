@@ -65,12 +65,12 @@ class PamPressureController(Node):
     PAM圧力制御ノード。
 
     入力:
-      control_pressure_topic : Float32 [kPa]
+      control_topic : Float32 [kPa]
         例: /sensors/pam_pressure, /sensors/pam_valve_pressure
     出力:
       /actuators/pam_valve  : Float32MultiArray [ch, volt]
 
-    PID制御により control_pressure_topic の圧力を target_pressure_kpa に保つ。
+    PID制御により control_topic の圧力を target_pressure_kpa に保つ。
     derivative_enable_delay_s まではD項を無効化し、起動時はPIとして動かす。
     kd=0.0 なら従来のPI制御と同じ挙動になる。
     バルブは 0–10V, 5V 中立。
@@ -90,8 +90,7 @@ class PamPressureController(Node):
         self.declare_parameter('output_limit', 4.9)
         self.declare_parameter('valve_channel', 3)
         self.declare_parameter('control_rate_hz', 500.0)
-        self.declare_parameter('pressure_topic', '/sensors/pam_pressure')  # legacy alias
-        self.declare_parameter('control_pressure_topic', '')
+        self.declare_parameter('control_topic', '/sensors/pam_pressure')
         self.declare_parameter('valve_topic', '/actuators/pam_valve')
 
         kp             = float(self.get_parameter('kp').value)
@@ -104,12 +103,9 @@ class PamPressureController(Node):
         output_limit   = float(self.get_parameter('output_limit').value)
         self.channel   = int(self.get_parameter('valve_channel').value)
         rate_hz        = float(self.get_parameter('control_rate_hz').value)
-        legacy_pressure_topic = self.get_parameter('pressure_topic').value
-        control_pressure_topic = self.get_parameter('control_pressure_topic').value
-        if not control_pressure_topic:
-            control_pressure_topic = legacy_pressure_topic
+        control_topic = self.get_parameter('control_topic').value
         valve_topic    = self.get_parameter('valve_topic').value
-        self.control_pressure_topic = control_pressure_topic
+        self.control_topic = control_topic
 
         self.pid = PIDController(kp=kp, ki=ki, kd=kd, td=td, output_limit=output_limit)
 
@@ -125,13 +121,13 @@ class PamPressureController(Node):
         self.pub_debug_output = self.create_publisher(Float32, '/debug/pam_valve_output_V', 10)
         self.pub_debug_derivative = self.create_publisher(Float32, '/debug/pam_pressure_error_derivative_kPa_s', 10)
 
-        self.create_subscription(Float32, control_pressure_topic, self._cb_pressure, 10)
+        self.create_subscription(Float32, control_topic, self._cb_pressure, 10)
         self.create_timer(1.0 / rate_hz, self._control_loop)
 
         self.get_logger().info(
             f"PAM Pressure Controller started. "
             f"target={self.get_parameter('target_pressure_kpa').value:.1f} kPa, "
-            f"control_topic={self.control_pressure_topic}, "
+            f"control_topic={self.control_topic}, "
             f"kp={kp}, ki={ki}, kd={kd}, td={td}, "
             f"d_enable_delay={self.derivative_enable_delay_s}s, ch={self.channel}"
         )

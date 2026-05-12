@@ -1,9 +1,14 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, ExecuteProcess
+from launch.actions import ExecuteProcess
 from launch_ros.actions import Node
-from launch.substitutions import LaunchConfiguration
 from datetime import datetime
 import os
+
+
+# PAM pressure controller feedback source.
+# Use '/sensors/pam_valve_pressure' for valve-side control,
+# or '/sensors/pam_pressure' for PAM-side control.
+PAM_CONTROL_PRESSURE_TOPIC = '/sensors/pam_valve_pressure'
 
 
 def generate_launch_description():
@@ -13,8 +18,6 @@ def generate_launch_description():
     シリンダ側: 2つのサーボバルブ (ch1=head, ch3=rod) を M系列で差動駆動 (開ループ)
     PAM 側   : pam_const_pressure_controller で圧力一定制御 (ch6)
     """
-    control_pressure_topic = LaunchConfiguration('pam_control_pressure_topic')
-
     bag_dir = os.path.expanduser(
         f'~/koni_log/MC_{datetime.now().strftime("%Y%m%d_%H%M%S")}')
 
@@ -53,15 +56,6 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        DeclareLaunchArgument(
-            'pam_control_pressure_topic',
-            default_value='/sensors/pam_valve_pressure',
-            description=(
-                'Pressure topic used by pam_const_pressure_controller. '
-                'Use /sensors/pam_pressure for PAM-side control or '
-                '/sensors/pam_valve_pressure for valve-side control.'
-            ),
-        ),
         bag_record,
         # AI ボードノード
         Node(
@@ -152,8 +146,7 @@ def generate_launch_description():
                 'output_limit':        4.9,
                 'valve_channel':       1,
                 'control_rate_hz':     1000.0,
-                'pressure_topic':      '/sensors/pam_pressure',  # legacy fallback
-                'control_pressure_topic': control_pressure_topic,
+                'control_topic':       PAM_CONTROL_PRESSURE_TOPIC,
                 'valve_topic':         '/actuators/pam_valve',
             }],
         ),
