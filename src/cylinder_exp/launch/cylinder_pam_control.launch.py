@@ -127,6 +127,8 @@ def generate_launch_description():
                 'target_pressure_kpa': 100.0,
                 'kp':                  0.0, # 0.02
                 'ki':                  0.0, # 0.005
+                'kd':                  0.0,
+                'td':                  0.01,
                 'output_limit':        4.9,
                 'valve_channel':       6,
                 'control_rate_hz':     500.0,
