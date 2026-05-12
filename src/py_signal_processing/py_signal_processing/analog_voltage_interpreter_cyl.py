@@ -14,8 +14,9 @@ class SensorInterpreterNode(Node):
       /sensors/head_pressure     : Float32 [kPa] (ヘッド側圧力)
       /sensors/rod_pressure      : Float32 [kPa] (ロッド側圧力)
       /sensors/loadcell_force    : Float32 [N]   (ロードセルの力)
-      /sensors/pam_pressure      : Float32 [kPa] (PAM圧力)
-      /sensors/supply_pressure   : Float32 [kPa] (供給圧力)
+      /sensors/pam_pressure        : Float32 [kPa] (PAM直前圧力)
+      /sensors/pam_valve_pressure  : Float32 [kPa] (PAMバルブ直後圧力)
+      /sensors/supply_pressure     : Float32 [kPa] (供給圧力)
     """
     def __init__(self):
         super().__init__('sensor_interpreter')
@@ -32,13 +33,17 @@ class SensorInterpreterNode(Node):
         self.declare_parameter('head_pressure_index', 0)
         self.declare_parameter('rod_pressure_index', 1)
         self.declare_parameter('pam_pressure_index', 5)
+        self.declare_parameter('pam_valve_pressure_index', 6)
         self.declare_parameter('supply_pressure_index', 4)
         self.declare_parameter('v0_pressure_head', 1.0)
         self.declare_parameter('v0_pressure_rod', 1.0)
+        self.declare_parameter('v0_pressure_pam', 1.0)
+        self.declare_parameter('v0_pressure_pam_valve', 1.0)
         self.declare_parameter('v0_pressure_supply', 1.0)
         self.declare_parameter('slope_kPa_per_V_head', 250.0)
         self.declare_parameter('slope_kPa_per_V_rod', 250.0)
-        self.declare_parameter('slope_kPa_per_V_pam', 25.25)
+        self.declare_parameter('slope_kPa_per_V_pam', 250.0)
+        self.declare_parameter('slope_kPa_per_V_pam_valve', 250.0)
         self.declare_parameter('slope_kPa_per_V_supply', 250.0)
         self.declare_parameter('cutoff_hz_pressure', 20.0)
 
@@ -60,13 +65,17 @@ class SensorInterpreterNode(Node):
         self.hi          = self.get_parameter('head_pressure_index').value
         self.ri          = self.get_parameter('rod_pressure_index').value
         self.pi          = self.get_parameter('pam_pressure_index').value
+        self.pvi         = self.get_parameter('pam_valve_pressure_index').value
         self.si          = self.get_parameter('supply_pressure_index').value
         self.v0H_press   = self.get_parameter('v0_pressure_head').value
         self.v0R_press   = self.get_parameter('v0_pressure_rod').value
+        self.v0Pam_press = self.get_parameter('v0_pressure_pam').value
+        self.v0PamValve_press = self.get_parameter('v0_pressure_pam_valve').value
         self.v0S_press   = self.get_parameter('v0_pressure_supply').value
         self.kH_press    = self.get_parameter('slope_kPa_per_V_head').value
         self.kR_press    = self.get_parameter('slope_kPa_per_V_rod').value
         self.kpam_press  = self.get_parameter('slope_kPa_per_V_pam').value
+        self.kPamValve_press = self.get_parameter('slope_kPa_per_V_pam_valve').value
         self.kS_press    = self.get_parameter('slope_kPa_per_V_supply').value
         self.cutoff_pres = self.get_parameter('cutoff_hz_pressure').value
 
@@ -81,6 +90,7 @@ class SensorInterpreterNode(Node):
         self.lpf_head   = LowPassFilter(self.cutoff_pres)
         self.lpf_rod    = LowPassFilter(self.cutoff_pres)
         self.lpf_pam    = LowPassFilter(self.cutoff_pres)
+        self.lpf_pam_valve = LowPassFilter(self.cutoff_pres)
         self.lpf_supply = LowPassFilter(self.cutoff_pres)
         self.lpf_lc     = LowPassFilter(self.cutoff_lc)
 
@@ -89,6 +99,7 @@ class SensorInterpreterNode(Node):
         self.pub_rod_kpa    = self.create_publisher(Float32, '/sensors/rod_pressure', 10)
         self.pub_loadcell_n = self.create_publisher(Float32, '/sensors/loadcell_force', 10)
         self.pub_pam_kpa    = self.create_publisher(Float32, '/sensors/pam_pressure', 10)
+        self.pub_pam_valve_kpa = self.create_publisher(Float32, '/sensors/pam_valve_pressure', 10)
         self.pub_supply_kpa = self.create_publisher(Float32, '/sensors/supply_pressure', 10)
 
         self.sub_cnt = self.create_subscription(Float32MultiArray, self.cnt_topic, self._cb_count, 10)
@@ -135,17 +146,24 @@ class SensorInterpreterNode(Node):
             self.pub_head_kpa.publish(Float32(data=filtered_P_head))
             self.pub_rod_kpa.publish(Float32(data=filtered_P_rod))
 
-        # PAM圧力センサの処理
-        # if self.pi < len(arr):
-        #     V_pam = float(arr[self.pi])
-        #     raw_P_pam_kPa = (V_pam - self.v0H_press) * self.kpam_press
-        #     filtered_P_pam = self.lpf_pam.update(raw_P_pam_kPa, current_time_sec)
-        #     self.pub_pam_kpa.publish(Float32(data=filtered_P_pam))
+        # PAM直前圧力センサの処理
         if self.pi < len(arr):
             V_pam = float(arr[self.pi])
-            raw_P_pam_kPa = (V_pam - self.v0H_press) * self.kH_press
+            raw_P_pam_kPa = (V_pam - self.v0Pam_press) * self.kpam_press
             filtered_P_pam = self.lpf_pam.update(raw_P_pam_kPa, current_time_sec)
             self.pub_pam_kpa.publish(Float32(data=filtered_P_pam))
+
+        # PAMバルブ直後圧力センサの処理
+        if self.pvi < len(arr):
+            V_pam_valve = float(arr[self.pvi])
+            raw_P_pam_valve_kPa = (
+                V_pam_valve - self.v0PamValve_press
+            ) * self.kPamValve_press
+            filtered_P_pam_valve = self.lpf_pam_valve.update(
+                raw_P_pam_valve_kPa,
+                current_time_sec,
+            )
+            self.pub_pam_valve_kpa.publish(Float32(data=filtered_P_pam_valve))
 
         # 供給圧力センサの処理
         if self.si < len(arr):
