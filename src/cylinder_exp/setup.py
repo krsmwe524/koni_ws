@@ -30,6 +30,7 @@ setup(
         'pam_const_pressure_controller = cylinder_exp.pam_const_pressure_controller:main',
         'mixer_node = cylinder_exp.mixer_node:main',
         'cylinder_mseq_driver = cylinder_exp.cylinder_mseq_driver:main',
+        'random_waypoint_pos_controller = cylinder_exp.random_waypoint_pos_controller:main',
         ],
     },
 )
