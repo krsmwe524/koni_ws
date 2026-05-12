@@ -109,7 +109,7 @@ def generate_launch_description():
 
                 # タイミング
                 'update_rate_hz':      1000.0,
-                'startup_wait_s':      10.0,    # PAM圧力安定化のための待機
+                'startup_wait_s':      8.0,    # PAM圧力安定化のための待機
                 'startup_head_voltage_v': 0.0,  # 待機中のヘッド側
                 'startup_rod_voltage_v':  8.0,  # 待機中のロッド側
                 'amp_ramp_duration_s': 1.0,    # 振幅 0 → A をかけるランプ時間
@@ -127,11 +127,11 @@ def generate_launch_description():
             name='pam_const_pressure_controller_node',
             output='screen',
             parameters=[{
-                'target_pressure_kpa': 100.0,
-                'kp':                  0.045,  # 0.05
-                'ki':                  0.015,  # 0.08
-                'kd':                  0.0,
-                'td':                  0.01,
+                'target_pressure_kpa': 250.0,
+                'kp':                  0.048,  # 0.05
+                'ki':                  0.00,  # 0.08
+                'kd':                  0.0023, # 0.001
+                'td':                  0.08,
                 'output_limit':        4.9,
                 'valve_channel':       1,
                 'control_rate_hz':     1000.0,
