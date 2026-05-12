@@ -132,6 +132,7 @@ def generate_launch_description():
                 'ki':                  0.00,  # 0.08
                 'kd':                  0.0023, # 0.001
                 'td':                  0.08,
+                'derivative_enable_delay_s': 10.0,
                 'output_limit':        4.9,
                 'valve_channel':       1,
                 'control_rate_hz':     1000.0,

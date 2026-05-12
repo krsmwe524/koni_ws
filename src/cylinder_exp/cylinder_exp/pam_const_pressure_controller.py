@@ -25,7 +25,7 @@ class PIDController:
         self.last_derivative = 0.0
         self._has_prev_error = False
 
-    def update(self, target, actual, dt):
+    def update(self, target, actual, dt, derivative_enabled=True):
         if dt <= 0.0:
             return 0.0
 
@@ -36,16 +36,20 @@ class PIDController:
             integral_limit = self.output_limit / self.ki
             self.integral = max(-integral_limit, min(integral_limit, self.integral))
 
-        if self._has_prev_error:
-            raw_derivative = (error - self.prev_error) / dt
-            if self.td > 0.0:
-                alpha = self.td / (self.td + dt)
-                derivative = alpha * self.prev_derivative + (1.0 - alpha) * raw_derivative
+        if derivative_enabled:
+            if self._has_prev_error:
+                raw_derivative = (error - self.prev_error) / dt
+                if self.td > 0.0:
+                    alpha = self.td / (self.td + dt)
+                    derivative = alpha * self.prev_derivative + (1.0 - alpha) * raw_derivative
+                else:
+                    derivative = raw_derivative
             else:
-                derivative = raw_derivative
+                derivative = 0.0
+                self._has_prev_error = True
         else:
             derivative = 0.0
-            self._has_prev_error = True
+            self._has_prev_error = False
 
         output = self.kp * error + self.ki * self.integral + self.kd * derivative
         output = max(-self.output_limit, min(self.output_limit, output))
@@ -66,6 +70,7 @@ class PamPressureController(Node):
       /actuators/pam_valve  : Float32MultiArray [ch, volt]
 
     PID制御により pam_pressure を target_pressure_kpa に保つ。
+    derivative_enable_delay_s まではD項を無効化し、起動時はPIとして動かす。
     kd=0.0 なら従来のPI制御と同じ挙動になる。
     バルブは 0–10V, 5V 中立。
     """
@@ -80,6 +85,7 @@ class PamPressureController(Node):
         self.declare_parameter('ki', 0.005)
         self.declare_parameter('kd', 0.0)
         self.declare_parameter('td', 0.01)
+        self.declare_parameter('derivative_enable_delay_s', 0.0)
         self.declare_parameter('output_limit', 4.9)
         self.declare_parameter('valve_channel', 3)
         self.declare_parameter('control_rate_hz', 500.0)
@@ -90,6 +96,9 @@ class PamPressureController(Node):
         ki             = float(self.get_parameter('ki').value)
         kd             = float(self.get_parameter('kd').value)
         td             = float(self.get_parameter('td').value)
+        self.derivative_enable_delay_s = float(
+            self.get_parameter('derivative_enable_delay_s').value
+        )
         output_limit   = float(self.get_parameter('output_limit').value)
         self.channel   = int(self.get_parameter('valve_channel').value)
         rate_hz        = float(self.get_parameter('control_rate_hz').value)
@@ -100,6 +109,7 @@ class PamPressureController(Node):
 
         self.current_pressure = None
         self._last_time = None
+        self._start_time = time.monotonic()
 
         self.pub_valve        = self.create_publisher(Float32MultiArray, valve_topic, 10)
         self.pub_debug_target = self.create_publisher(Float32, '/debug/pam_target_pressure_kPa', 10)
@@ -113,7 +123,8 @@ class PamPressureController(Node):
         self.get_logger().info(
             f"PAM Pressure Controller started. "
             f"target={self.get_parameter('target_pressure_kpa').value:.1f} kPa, "
-            f"kp={kp}, ki={ki}, kd={kd}, td={td}, ch={self.channel}"
+            f"kp={kp}, ki={ki}, kd={kd}, td={td}, "
+            f"d_enable_delay={self.derivative_enable_delay_s}s, ch={self.channel}"
         )
 
     def _cb_pressure(self, msg: Float32):
@@ -135,7 +146,13 @@ class PamPressureController(Node):
             return
 
         target_kpa = float(self.get_parameter('target_pressure_kpa').value)
-        u = self.pid.update(target_kpa, self.current_pressure, dt)
+        derivative_enabled = (now - self._start_time) >= self.derivative_enable_delay_s
+        u = self.pid.update(
+            target_kpa,
+            self.current_pressure,
+            dt,
+            derivative_enabled=derivative_enabled,
+        )
 
         valve_volt = max(0.0, min(10.0, self.VALVE_NEUTRAL + u))
 
