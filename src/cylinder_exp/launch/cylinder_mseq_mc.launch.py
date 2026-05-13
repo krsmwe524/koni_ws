@@ -8,7 +8,7 @@ import os
 # PAM pressure controller feedback source.
 # Use '/sensors/pam_valve_pressure' for valve-side control,
 # or '/sensors/pam_pressure' for PAM-side control.
-PAM_CONTROL_PRESSURE_TOPIC = '/sensors/pam_valve_pressure'
+PAM_CONTROL_PRESSURE_TOPIC = '/sensors/pam_pressure'
 
 
 def generate_launch_description():
@@ -59,7 +59,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        bag_record,
+        # bag_record,
         # AI ボードノード
         Node(
             package='control_box',
@@ -97,7 +97,7 @@ def generate_launch_description():
                 'loadcell_minus_index': 3,
                 'pam_pressure_index':   7,
                 'pam_valve_pressure_index': 6,
-                'cutoff_hz_pressure':   10.0,
+                'cutoff_hz_pressure':   8.0,
             }],
         ),
 
@@ -114,15 +114,15 @@ def generate_launch_description():
 
                 # M系列差動駆動
                 'amplitude_v':         0.8,    # A [V] (1V前後を目安)
-                'neutral_head_voltage_v': 4.6,  # M系列駆動中・終了後のヘッド側中立電圧
+                'neutral_head_voltage_v': 4.5,  # M系列駆動中・終了後のヘッド側中立電圧
                 'neutral_rod_voltage_v':  6.5,  # M系列駆動中・終了後のロッド側中立電圧
                 'mseq_order':          9,     # n=12 → 系列長 4095
                 'mseq_clock_period_s': 0.3,  # T_c = 10ms (1kHzサンプリングで10サンプル毎に切替)
-                'mseq_seed':           5,      # 訓練用シード (評価用は別 launch で 2 などに)
+                'mseq_seed':           1,      # 訓練用シード (評価用は別 launch で 2 などに)
 
                 # タイミング
                 'update_rate_hz':      1000.0,
-                'startup_wait_s':      8.0,    # PAM圧力安定化のための待機
+                'startup_wait_s':      13.0,    # PAM圧力安定化のための待機
                 'startup_head_voltage_v': 0.0,  # 待機中のヘッド側
                 'startup_rod_voltage_v':  8.0,  # 待機中のロッド側
                 'amp_ramp_duration_s': 1.0,    # 振幅 0 → A をかけるランプ時間
@@ -140,14 +140,14 @@ def generate_launch_description():
             name='pam_sine_pressure_controller_node',
             output='screen',
             parameters=[{
-                'base_pressure_kpa':    100.0,
+                'base_pressure_kpa':    200.0,
                 'amplitude_kpa':        5.0,
                 'sine_freq_hz':         0.5,
-                'sine_start_delay_s':   0.0,
-                'kp':                   0.048,  # 0.05
-                'ki':                   0.00,  # 0.08
-                'kd':                   0.0023, # 0.001
-                'td':                   0.08,
+                'sine_start_delay_s':   13.0,
+                'kp':                   0.03,  # 0.05
+                'ki':                   0.01,  # 0.08
+                'kd':                   0.001, # 0.001
+                'td':                   0.05,
                 'derivative_enable_delay_s': 10.0,
                 'output_limit':         4.9,
                 'valve_channel':        1,
