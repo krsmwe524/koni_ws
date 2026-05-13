@@ -16,7 +16,7 @@ def generate_launch_description():
     M系列を用いた MC (Memory Capacity) 評価実験用 launch。
 
     シリンダ側: 2つのサーボバルブ (ch1=head, ch3=rod) を M系列で差動駆動 (開ループ)
-    PAM 側   : pam_const_pressure_controller で圧力一定制御 (ch6)
+    PAM 側   : Node() のコメントアウトで圧力一定制御/正弦波追従を切り替え
     """
     bag_dir = os.path.expanduser(
         f'~/koni_log/MC_{datetime.now().strftime("%Y%m%d_%H%M%S")}')
@@ -51,6 +51,9 @@ def generate_launch_description():
             '/debug/pam_pressure_error_kPa',
             '/debug/pam_pressure_error_derivative_kPa_s',
             '/debug/pam_valve_output_V',
+            '/debug/pam_sine_base_pressure_kPa',
+            '/debug/pam_sine_amplitude_kPa',
+            '/debug/pam_sine_phase_rad',
         ],
         output='screen',
     )
@@ -130,26 +133,49 @@ def generate_launch_description():
             }],
         ),
 
-        # PAM 定圧制御ノード
+        # PAM 正弦波圧力追従ノード
         Node(
             package='cylinder_exp',
-            executable='pam_const_pressure_controller',
-            name='pam_const_pressure_controller_node',
+            executable='pam_sine_pressure_controller',
+            name='pam_sine_pressure_controller_node',
             output='screen',
             parameters=[{
-                'target_pressure_kpa': 250.0,
-                'kp':                  0.048,  # 0.05
-                'ki':                  0.00,  # 0.08
-                'kd':                  0.0023, # 0.001
-                'td':                  0.08,
+                'base_pressure_kpa':    100.0,
+                'amplitude_kpa':        5.0,
+                'sine_freq_hz':         0.5,
+                'sine_start_delay_s':   0.0,
+                'kp':                   0.048,  # 0.05
+                'ki':                   0.00,  # 0.08
+                'kd':                   0.0023, # 0.001
+                'td':                   0.08,
                 'derivative_enable_delay_s': 10.0,
-                'output_limit':        4.9,
-                'valve_channel':       1,
-                'control_rate_hz':     1000.0,
-                'control_topic':       PAM_CONTROL_PRESSURE_TOPIC,
-                'valve_topic':         '/actuators/pam_valve',
+                'output_limit':         4.9,
+                'valve_channel':        1,
+                'control_rate_hz':      1000.0,
+                'control_topic':        PAM_CONTROL_PRESSURE_TOPIC,
+                'valve_topic':          '/actuators/pam_valve',
             }],
         ),
+        # PAM 定圧制御ノード
+        # Node(
+        #     package='cylinder_exp',
+        #     executable='pam_const_pressure_controller',
+        #     name='pam_const_pressure_controller_node',
+        #     output='screen',
+        #     parameters=[{
+        #         'target_pressure_kpa': 100.0,
+        #         'kp':                  0.048,  # 0.05
+        #         'ki':                  0.00,  # 0.08
+        #         'kd':                  0.0023, # 0.001
+        #         'td':                  0.08,
+        #         'derivative_enable_delay_s': 10.0,
+        #         'output_limit':        4.9,
+        #         'valve_channel':       1,
+        #         'control_rate_hz':     1000.0,
+        #         'control_topic':       PAM_CONTROL_PRESSURE_TOPIC,
+        #         'valve_topic':         '/actuators/pam_valve',
+        #     }],
+        # ),
 
         # バルブ指令統合ノード
         Node(

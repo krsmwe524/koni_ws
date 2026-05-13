@@ -138,11 +138,11 @@ def generate_launch_description():
                 'pres_td': 0.01,
                 'pres_output_limit': 4.9,
 
-                # ホーミング
-                'homing_settle_threshold': 0.002,
-                'homing_settle_duration':  2.0,
-                'homing_startup_wait':     2.5,
-                'homing_rod_voltage':      8.0,
+                # 起動待機: cylinder_mseq_mc.launch.py と同様に、
+                # この電圧を startup_wait_s 秒だけ出し、その最後の位置を x_0 にする。
+                'startup_wait_s':         8.0,
+                'startup_head_voltage_v': 0.0,
+                'startup_rod_voltage_v':  8.0,
 
                 # ロードセル補償
                 'use_loadcell_compensation': False,

@@ -5,7 +5,7 @@ import numpy as np
 import rclpy
 from std_msgs.msg import Float32, Int32
 
-from cylinder_exp.pos_controller import CylinderPositionController
+from cylinder_exp.pos_controller import ControllerState, CylinderPositionController
 
 
 class RandomWaypointPositionController(CylinderPositionController):
@@ -20,6 +20,10 @@ class RandomWaypointPositionController(CylinderPositionController):
 
     def __init__(self):
         super().__init__()
+
+        self.declare_parameter('startup_wait_s', 8.0)
+        self.declare_parameter('startup_head_voltage_v', 0.0)
+        self.declare_parameter('startup_rod_voltage_v', 8.0)
 
         self.declare_parameter('random_amplitude_m', 0.020)
         self.declare_parameter('random_amp_ramp_rate_m_s', 0.0005)
@@ -74,11 +78,54 @@ class RandomWaypointPositionController(CylinderPositionController):
         s = 0.5 - 0.5 * math.cos(math.pi * phase)
         return (1.0 - s) * self._wp_prev + s * self._wp_next
 
+    def _state_waiting_sensor(self, now):
+        startup_head_v = float(self.get_parameter('startup_head_voltage_v').value)
+        startup_rod_v = float(self.get_parameter('startup_rod_voltage_v').value)
+        self._send_valve(startup_head_v, startup_rod_v)
+
+        if self.current_pos is not None:
+            self.get_logger().info(
+                f"Sensors connected. Startup wait: head={startup_head_v:.3f}V, "
+                f"rod={startup_rod_v:.3f}V"
+            )
+            self.state = ControllerState.HOMING
+            self.homing_start_time = now
+            self.homing_last_pos = self.current_pos
+            self.homing_settle_start = None
+
     def _state_homing(self, now):
-        prev_state = self.state
-        super()._state_homing(now)
-        if prev_state != self.state and self.state.name == 'RUNNING':
-            self._reset_random_trajectory(self.run_start_time)
+        startup_head_v = float(self.get_parameter('startup_head_voltage_v').value)
+        startup_rod_v = float(self.get_parameter('startup_rod_voltage_v').value)
+        startup_wait_s = max(0.0, float(self.get_parameter('startup_wait_s').value))
+
+        self._send_valve(startup_head_v, startup_rod_v)
+
+        if self.homing_start_time is None:
+            self.homing_start_time = now
+
+        if now - self.homing_start_time < startup_wait_s:
+            self.homing_last_pos = self.current_pos
+            return
+
+        self.x_0 = self.current_pos
+        self.get_logger().info(
+            f"Startup wait complete. x_0 = {self.x_0:.4f} m. "
+            f"Starting random waypoint control."
+        )
+
+        self.pid_pos.reset()
+        self.pid_pH.reset()
+        self.pid_pR.reset()
+        self._target_force_N = 0.0
+        self._current_gain_ratio = float(
+            self.get_parameter('gain_ramp_start_ratio').value
+        )
+        self._outer_last_time = time.monotonic()
+        self.run_start_time = time.monotonic()
+        self.current_sine_amp = 0.0
+        self._reset_random_trajectory(self.run_start_time)
+
+        self.state = ControllerState.RUNNING
 
     def _state_running(self, now, dt):
         target_amp = max(0.0, float(self.get_parameter('random_amplitude_m').value))
@@ -94,7 +141,8 @@ class RandomWaypointPositionController(CylinderPositionController):
         r = self._smooth_random_value(now, period_s)
         self._last_random_value = r
 
-        # x_0 is the homed minimum end. Keep the target inside [x_0, x_0 + 2A].
+        # x_0 is captured at the end of startup_wait_s.
+        # Keep the target inside [x_0, x_0 + 2A].
         x_ref_rel = self._random_amp * (1.0 + r)
         x_rel = self._get_relative_pos()
 
