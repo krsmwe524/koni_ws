@@ -2,7 +2,7 @@
 """
 MPYE サーボバルブ中立電圧スイープノード。
 
-指定範囲の電圧を往復スイープし、各ステップでの流量計生電圧を記録する。
+指定範囲の電圧をスイープし、各ステップでの流量計生電圧を記録する。
 流量がゼロ（最小）になる電圧 = バルブの中立電圧。
 
 出力:
@@ -30,6 +30,7 @@ class SweepNode(Node):
         self.declare_parameter('v_step', 0.05)
         self.declare_parameter('hold_time_s', 2.0)
         self.declare_parameter('control_rate_hz', 100.0)
+        self.declare_parameter('one_way', False)
 
         self.valve_ch = self.get_parameter('valve_channel').value
         self.flow_ch = self.get_parameter('flowmeter_channel').value
@@ -38,8 +39,9 @@ class SweepNode(Node):
         self.v_step = self.get_parameter('v_step').value
         self.hold_time = self.get_parameter('hold_time_s').value
         self.rate_hz = self.get_parameter('control_rate_hz').value
+        self.one_way = self.get_parameter('one_way').value
 
-        # スイープ電圧列を生成（往復）
+        # スイープ電圧列を生成
         self.voltage_list = self._build_sweep()
         self.step_index = 0
         self.hold_elapsed = 0.0
@@ -65,8 +67,12 @@ class SweepNode(Node):
         dt = 1.0 / self.rate_hz
         self.create_timer(dt, self._control_loop)
 
+        sweep_mode = 'one-way' if self.one_way else 'round-trip'
+        sweep_path = (f"{self.v_start:.3f} -> {self.v_end:.3f} V"
+                      if self.one_way
+                      else f"{self.v_start:.3f} -> {self.v_end:.3f} -> {self.v_start:.3f} V")
         self.get_logger().info(
-            f"Sweep: {self.v_start:.3f} -> {self.v_end:.3f} -> {self.v_start:.3f} V, "
+            f"Sweep ({sweep_mode}): {sweep_path}, "
             f"step={self.v_step:.3f} V, hold={self.hold_time:.1f} s, "
             f"valve_ch={self.valve_ch}, flow_ch={self.flow_ch}, "
             f"total {len(self.voltage_list)} steps"
@@ -74,12 +80,15 @@ class SweepNode(Node):
 
     # ------------------------------------------------------------------
     def _build_sweep(self):
-        """往復の電圧リストを構築する。"""
+        """スイープ用の電圧リストを構築する。"""
         steps_forward = []
         v = self.v_start
         while v <= self.v_end + 1e-9:
             steps_forward.append(round(v, 4))
             v += self.v_step
+
+        if self.one_way:
+            return steps_forward
 
         # 往復: forward + reverse (両端の重複を除く)
         steps_reverse = list(reversed(steps_forward[:-1]))
