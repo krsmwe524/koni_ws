@@ -27,8 +27,8 @@ def generate_launch_description():
             '-o', bag_dir,
             '-s', 'mcap',
             # アクチュエータ
-            '/actuators/cylinder_valves',
-            '/actuators/pam_valve',
+            # '/actuators/cylinder_valves',
+            # '/actuators/pam_valve',
             '/actuators/valve_voltage',
             # センサ
             '/sensors/cylinder_position',
@@ -40,12 +40,12 @@ def generate_launch_description():
             '/sensors/supply_pressure',
             # ランダム目標位置制御のデバッグ
             '/debug/random_waypoint_value',
-            '/debug/random_waypoint_index',
+            # '/debug/random_waypoint_index',
             '/debug/current_random_amplitude_m',
             '/debug/target_position_m',
             '/debug/current_rel_position_m',
-            '/debug/position_error_m',
-            '/debug/target_force_N',
+            #'/debug/position_error_m',
+            # '/debug/target_force_N',
             '/debug/pid_force_N',
             '/debug/target_pressure_head_kPa',
             '/debug/target_pressure_rod_kPa',
@@ -53,7 +53,7 @@ def generate_launch_description():
             '/debug/current_pressure_rod_kPa',
             '/debug/valve_delta_head_V',
             '/debug/valve_delta_rod_V',
-            # PAM 定圧制御のデバッグ
+            # PAM 圧力制御のデバッグ
             '/debug/pam_target_pressure_kPa',
             '/debug/pam_control_pressure_kPa',
             '/debug/pam_control_pressure_error_kPa',
@@ -111,7 +111,7 @@ def generate_launch_description():
 
                 # ループ周期
                 'outer_rate_hz': 500.0,
-                'inner_rate_hz': 1000.0,
+                'inner_rate_hz': 800.0,
 
                 # 滑らかなランダム目標位置
                 # x_ref_rel は [0, 2 * random_amplitude_m] の範囲。
@@ -124,7 +124,7 @@ def generate_launch_description():
                 'base_pressure_kpa':   250.0,
                 'supply_pressure_kpa': 600.0,
 
-                # 位置ループ PID（cylinder_control.launch.py を基準）
+                # 位置ループ PID
                 'pos_kp': 1500.0,
                 'pos_ki': 30.0,
                 'pos_kd': 0.0,
@@ -164,7 +164,7 @@ def generate_launch_description():
                 'derivative_enable_delay_s': 10.0,
                 'output_limit':        4.9,
                 'valve_channel':       1,
-                'control_rate_hz':     1000.0,
+                'control_rate_hz':     500.0,
                 'control_topic':       PAM_CONTROL_PRESSURE_TOPIC,
                 'valve_topic':         '/actuators/pam_valve',
             }],
@@ -175,7 +175,7 @@ def generate_launch_description():
             name='valve_mixer_node',
             output='screen',
             parameters=[{
-                'output_rate_hz': 1000.0,
+                'output_rate_hz': 500.0,
                 'initial_voltages': [
                     5.0, 5.0, 8.0, 0.0,
                     5.0, 5.0, 5.0, 5.0,
