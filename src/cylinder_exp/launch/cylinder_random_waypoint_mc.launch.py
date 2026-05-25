@@ -42,9 +42,9 @@ def generate_launch_description():
             '/debug/random_sine_frequency_hz',
             '/debug/random_sine_amplitude_m',
             '/debug/random_sine_phase_rad',
-            '/debug/random_sine_cycle_index',
+            #'/debug/random_sine_cycle_index',
             '/debug/target_position_m',
-            '/debug/current_rel_position_m',
+            # '/debug/current_rel_position_m',
             #'/debug/position_error_m',
             # '/debug/target_force_N',
             #'/debug/pid_force_N',
@@ -60,13 +60,13 @@ def generate_launch_description():
             # '/debug/pam_control_pressure_error_kPa',
             # '/debug/pam_pressure_error_kPa',
             # '/debug/pam_pressure_error_derivative_kPa_s',
-            # '/debug/pam_valve_output_V',
+            '/debug/pam_valve_output_V',
         ],
         output='screen',
     )
 
     return LaunchDescription([
-        # bag_record,
+        bag_record,
         Node(
             package='control_box',
             executable='ai1616llpe_test',
@@ -91,8 +91,8 @@ def generate_launch_description():
             name='sensor_interpreter_node',
             output='screen',
             parameters=[{
-                'head_pressure_index':  1,
-                'rod_pressure_index':   0,
+                'head_pressure_index':  0,
+                'rod_pressure_index':   1,
                 'loadcell_plus_index':  2,
                 'loadcell_minus_index': 3,
                 'pam_pressure_index':   7,
@@ -118,25 +118,25 @@ def generate_launch_description():
                 # f は 1-3 Hz、A は下記範囲から各サイクル開始時にランダム選択。
                 # x_ref_rel = A * (1 - cos(phase)) なので範囲は [0, 2A]。
                 'random_sine_frequency_min_hz': 1.0,
-                'random_sine_frequency_max_hz': 3.0,
-                'random_sine_amplitude_min_m': 0.005,
+                'random_sine_frequency_max_hz': 1.5,
+                'random_sine_amplitude_min_m': 0.010,
                 'random_sine_amplitude_max_m': 0.020,
-                'random_sine_seed': 5,
+                'random_sine_seed': 6,
 
                 # 圧力
                 'base_pressure_kpa':   250.0,
                 'supply_pressure_kpa': 600.0,
 
                 # 位置ループ PID
-                'pos_kp': 1500.0,
-                'pos_ki': 30.0,
+                'pos_kp': 5000.0,
+                'pos_ki': 0.0,
                 'pos_kd': 0.0,
                 'pos_td': 1.0,
                 'pos_output_limit': 1000.0,
 
                 # 圧力ループ PID
-                'pres_kp': 0.016,
-                'pres_ki': 0.002,
+                'pres_kp': 0.0075,
+                'pres_ki': 0.003,
                 'pres_kd': 0.0,
                 'pres_td': 0.01,
                 'pres_output_limit': 4.9,
@@ -159,9 +159,9 @@ def generate_launch_description():
             name='pam_const_pressure_controller_node',
             output='screen',
             parameters=[{
-                'target_pressure_kpa': 250.0,
+                'target_pressure_kpa': 150.0,
                 'kp':                  0.048,
-                'ki':                  0.00,
+                'ki':                  0.003,
                 'kd':                  0.0023,
                 'td':                  0.08,
                 'derivative_enable_delay_s': 10.0,
