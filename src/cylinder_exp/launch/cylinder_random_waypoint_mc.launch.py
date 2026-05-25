@@ -12,11 +12,11 @@ PAM_CONTROL_PRESSURE_TOPIC = '/sensors/pam_pressure'
 
 
 def generate_launch_description():
-    """Smooth random cylinder-position trajectory for MC-style experiments.
+    """Randomized sine cylinder-position trajectory for MC-style experiments.
 
     Channel and sensor assignments follow cylinder_mseq_mc.launch.py.
-    The cylinder is position-controlled with smooth random waypoints instead of
-    open-loop M-sequence voltage steps.
+    The cylinder is position-controlled with randomized sine frequency and
+    amplitude instead of open-loop M-sequence voltage steps.
     """
     bag_dir = os.path.expanduser(
         f'~/koni_log/RW_MC_{datetime.now().strftime("%Y%m%d_%H%M%S")}')
@@ -38,34 +38,35 @@ def generate_launch_description():
             '/sensors/pam_pressure',
             '/sensors/pam_valve_pressure',
             '/sensors/supply_pressure',
-            # ランダム目標位置制御のデバッグ
-            '/debug/random_waypoint_value',
-            # '/debug/random_waypoint_index',
-            '/debug/current_random_amplitude_m',
+            # ランダム sin 目標位置制御のデバッグ
+            '/debug/random_sine_frequency_hz',
+            '/debug/random_sine_amplitude_m',
+            '/debug/random_sine_phase_rad',
+            '/debug/random_sine_cycle_index',
             '/debug/target_position_m',
             '/debug/current_rel_position_m',
             #'/debug/position_error_m',
             # '/debug/target_force_N',
-            '/debug/pid_force_N',
-            '/debug/target_pressure_head_kPa',
-            '/debug/target_pressure_rod_kPa',
-            '/debug/current_pressure_head_kPa',
-            '/debug/current_pressure_rod_kPa',
-            '/debug/valve_delta_head_V',
-            '/debug/valve_delta_rod_V',
+            #'/debug/pid_force_N',
+            # '/debug/target_pressure_head_kPa',
+            # '/debug/target_pressure_rod_kPa',
+            # '/debug/current_pressure_head_kPa',
+            # '/debug/current_pressure_rod_kPa',
+            # '/debug/valve_delta_head_V',
+            # '/debug/valve_delta_rod_V',
             # PAM 圧力制御のデバッグ
-            '/debug/pam_target_pressure_kPa',
-            '/debug/pam_control_pressure_kPa',
-            '/debug/pam_control_pressure_error_kPa',
-            '/debug/pam_pressure_error_kPa',
-            '/debug/pam_pressure_error_derivative_kPa_s',
-            '/debug/pam_valve_output_V',
+            # '/debug/pam_target_pressure_kPa',
+            # '/debug/pam_control_pressure_kPa',
+            # '/debug/pam_control_pressure_error_kPa',
+            # '/debug/pam_pressure_error_kPa',
+            # '/debug/pam_pressure_error_derivative_kPa_s',
+            # '/debug/pam_valve_output_V',
         ],
         output='screen',
     )
 
     return LaunchDescription([
-        bag_record,
+        # bag_record,
         Node(
             package='control_box',
             executable='ai1616llpe_test',
@@ -101,8 +102,8 @@ def generate_launch_description():
         ),
         Node(
             package='cylinder_exp',
-            executable='random_waypoint_pos_controller',
-            name='random_waypoint_position_controller_node',
+            executable='random_sine_pos_controller',
+            name='random_sine_position_controller_node',
             output='screen',
             parameters=[{
                 # cylinder_mseq_mc.launch.py と同じAOチャンネル
@@ -113,12 +114,14 @@ def generate_launch_description():
                 'outer_rate_hz': 500.0,
                 'inner_rate_hz': 800.0,
 
-                # 滑らかなランダム目標位置
-                # x_ref_rel は [0, 2 * random_amplitude_m] の範囲。
-                'random_amplitude_m': 0.020,
-                'random_amp_ramp_rate_m_s': 0.0005,
-                'waypoint_period_s': 0.5,
-                'waypoint_seed': 5,
+                # ランダム sin 目標位置
+                # f は 1-3 Hz、A は下記範囲から各サイクル開始時にランダム選択。
+                # x_ref_rel = A * (1 - cos(phase)) なので範囲は [0, 2A]。
+                'random_sine_frequency_min_hz': 1.0,
+                'random_sine_frequency_max_hz': 3.0,
+                'random_sine_amplitude_min_m': 0.005,
+                'random_sine_amplitude_max_m': 0.020,
+                'random_sine_seed': 5,
 
                 # 圧力
                 'base_pressure_kpa':   250.0,
