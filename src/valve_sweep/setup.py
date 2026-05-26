@@ -26,6 +26,7 @@ setup(
     entry_points={
         'console_scripts': [
             'sweep_node = valve_sweep.sweep_node:main',
+            'neutral_sweep_node = valve_sweep.neutral_sweep_node:main',
         ],
     },
 )
