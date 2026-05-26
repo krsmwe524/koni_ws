@@ -22,7 +22,7 @@ def generate_launch_description():
 
     initial_voltage = LaunchConfiguration('initial_voltage')
     target_voltage = LaunchConfiguration('target_voltage')
-    valve_channel = LaunchConfiguration('valve_channel')
+    # valve_channel = LaunchConfiguration('valve_channel')
     monitor_ai_channel = LaunchConfiguration('monitor_ai_channel')
     sample_rate_hz = LaunchConfiguration('sample_rate_hz')
 
@@ -84,8 +84,8 @@ def generate_launch_description():
             'monitor_ai_channel': monitor_ai_channel_param,
             'initial_voltage': initial_voltage_param,
             'target_voltage': target_voltage_param,
-            'initial_duration_s': 3.0,
-            'target_duration_s': 3.0,
+            'initial_duration_s': 2.0,
+            'target_duration_s': 130.0,
             'sample_rate_hz': sample_rate_hz_param,
             'neutral_default': 5.0,
         }],
@@ -101,8 +101,8 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        DeclareLaunchArgument('initial_voltage', default_value='5.8'),
-        DeclareLaunchArgument('target_voltage', default_value='4.5'),
+        DeclareLaunchArgument('initial_voltage', default_value='5.6'),
+        DeclareLaunchArgument('target_voltage', default_value='5.8'),
         # DeclareLaunchArgument('valve_channel', default_value='1'),
         DeclareLaunchArgument('monitor_ai_channel', default_value='6'),
         DeclareLaunchArgument('sample_rate_hz', default_value='100.0'),
