@@ -7,7 +7,7 @@ import os
 
 def generate_launch_description():
     bag_dir = os.path.expanduser(
-        f'~/koni_log/4.8Vto10.0V_{datetime.now().strftime("%Y%m%d_%H%M%S")}_3')
+        f'~/koni_log/Neutral_{datetime.now().strftime("%Y%m%d_%H%M%S")}_3')
     bag_record = ExecuteProcess(
         cmd=[
             'ros2', 'bag', 'record',
@@ -16,13 +16,13 @@ def generate_launch_description():
             # '/actuators/valve_voltage',
             '/ai1616llpe/voltage',
             '/debug/sweep_voltage_V',
-            '/debug/sweep_flow_raw_V',
+            #'/debug/sweep_flow_raw_V',
         ],
         output='screen',
     )
 
     return LaunchDescription([
-        bag_record,
+      # bag_record,
         # AI ボードノード (センサ読み取り)
         Node(
             package='control_box',
@@ -52,11 +52,11 @@ def generate_launch_description():
             parameters=[{
                 'valve_channel':  1, #1と3 1はヘッド 3はロッド
                 'flowmeter_channel': 1, #流量計のチャンネル
-                'v_start':          4.8,
-                'v_end':            10.0,
+                'v_start':          4.6,
+                'v_end':            4.6,
                 'v_step':           0.05, #0.05
-                'hold_time_s':      2.0,
-                'control_rate_hz':  500.0,
+                'hold_time_s':      12.0,
+                'control_rate_hz':  100.0,
                 'one_way':          True, # True: 片道, False: 往復
             }],
         ),
