@@ -33,6 +33,7 @@ setup(
         'cylinder_mseq_driver = cylinder_exp.cylinder_mseq_driver:main',
         'random_waypoint_pos_controller = cylinder_exp.random_waypoint_pos_controller:main',
         'random_sine_pos_controller = cylinder_exp.random_sine_pos_controller:main',
+        'phase_pam_sine_pos_controller = cylinder_exp.phase_pam_sine_pos_controller:main',
         ],
     },
 )
