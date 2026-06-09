@@ -41,6 +41,7 @@ def generate_launch_description():
             '/sensors/head_pressure',
             '/sensors/rod_pressure',
             '/sensors/pam_pressure',
+            '/sensors/supply_pressure'
             '/sensors/pam_valve_pressure',
             '/debug/target_position_m',
             '/debug/sine_phase_rad',
@@ -121,7 +122,6 @@ def generate_launch_description():
             'pres_kd': 0.0,
             'pres_td': 0.01,
             'pres_output_limit': 4.9,
-
             # PAM control
             'pam_valve_channel': pam_valve_channel_param,
             'pam_control_topic': pam_control_topic,
@@ -130,7 +130,7 @@ def generate_launch_description():
             'pam_high_pressure_kpa': 350.0,
             'pam_high_start_ratio': 0.40,
             'pam_high_end_ratio': 0.50,
-            'pam_warmup_cycles': 3,
+            'pam_warmup_cycles': 10,
             'pam_hold_kp': 0.03,
             'pam_hold_ki': 0.01,
             'pam_step_kp': 0.03,
@@ -158,7 +158,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        DeclareLaunchArgument('record_bag', default_value='false'),
+        DeclareLaunchArgument('record_bag', default_value='true'),
         DeclareLaunchArgument('startup_stabilize_s', default_value='5.0'),
         DeclareLaunchArgument('sine_freq_hz', default_value='1.0'),
         DeclareLaunchArgument('sine_amplitude_m', default_value='0.010'),
