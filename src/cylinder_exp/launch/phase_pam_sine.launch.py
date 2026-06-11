@@ -41,8 +41,9 @@ def generate_launch_description():
             '/sensors/head_pressure',
             '/sensors/rod_pressure',
             '/sensors/pam_pressure',
-            '/sensors/supply_pressure'
+            '/sensors/supply_pressure',
             '/sensors/pam_valve_pressure',
+            '/sensors/loadcell_force',
             '/debug/target_position_m',
             '/debug/sine_phase_rad',
             '/debug/pam_target_pressure_kPa',
@@ -127,9 +128,9 @@ def generate_launch_description():
             'pam_control_topic': pam_control_topic,
             'pam_control_rate_hz': 1000.0,
             'pam_low_pressure_kpa': 100.0,
-            'pam_high_pressure_kpa': 350.0,
-            'pam_high_start_ratio': 0.40,
-            'pam_high_end_ratio': 0.50,
+            'pam_high_pressure_kpa': 100.0, #350.0
+            'pam_high_start_ratio': 0.10, #0.4
+            'pam_high_end_ratio': 0.20, #0.5
             'pam_warmup_cycles': 10,
             'pam_hold_kp': 0.03,
             'pam_hold_ki': 0.01,

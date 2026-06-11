@@ -86,6 +86,7 @@ class PhasePamSinePositionController(Node):
         self.CH_ROD = int(self.get_parameter('ch_rod').value)
         self.PAM_CH = int(self.get_parameter('pam_valve_channel').value)
 
+
         d_cyl = 0.020
         d_rod = 0.010
         self.area_head = math.pi / 4.0 * d_cyl ** 2
