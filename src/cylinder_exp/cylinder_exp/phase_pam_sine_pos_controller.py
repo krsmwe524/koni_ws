@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import math
+import random
 import time
 from enum import Enum, auto
 
@@ -75,6 +76,8 @@ class PhasePamSinePositionController(Node):
         self.declare_parameter('pam_high_pressure_kpa', 350.0)
         self.declare_parameter('pam_high_start_ratio', 0.40)
         self.declare_parameter('pam_high_end_ratio', 0.50)
+        self.declare_parameter('pam_randomize_high_window', False)
+        self.declare_parameter('pam_random_seed', 0)
         self.declare_parameter('pam_warmup_cycles', 3)
         self.declare_parameter('pam_hold_kp', 0.03)
         self.declare_parameter('pam_hold_ki', 0.01)
@@ -105,6 +108,11 @@ class PhasePamSinePositionController(Node):
         self.current_sine_amp = 0.0
         self.run_start_time = None
         self.stabilize_start_time = None
+        self._pam_rng = random.Random(int(self.get_parameter('pam_random_seed').value))
+        self._pam_random_windows = {}
+        self._pam_last_random_cycle = -1
+        self._current_pam_high_start = None
+        self._current_pam_high_end = None
         self._outer_last_time = None
         self._pam_last_time = None
         self._target_force_N = 0.0
@@ -139,6 +147,12 @@ class PhasePamSinePositionController(Node):
         self.pub_pam_output = self.create_publisher(
             Float32, '/debug/pam_valve_output_V', 10
         )
+        self.pub_pam_high_start = self.create_publisher(
+            Float32, '/debug/pam_high_start_ratio', 10
+        )
+        self.pub_pam_high_end = self.create_publisher(
+            Float32, '/debug/pam_high_end_ratio', 10
+        )
 
         pam_control_topic = self.get_parameter('pam_control_topic').value
         self.create_subscription(
@@ -164,6 +178,8 @@ class PhasePamSinePositionController(Node):
             f'PAM high ratio='
             f'{self.get_parameter("pam_high_start_ratio").value:.2f}-'
             f'{self.get_parameter("pam_high_end_ratio").value:.2f}, '
+            f'PAM randomize={self.get_parameter("pam_randomize_high_window").value}, '
+            f'PAM random seed={self.get_parameter("pam_random_seed").value}, '
             f'PAM topic={pam_control_topic}'
         )
 
@@ -270,6 +286,7 @@ class PhasePamSinePositionController(Node):
                 self.x_0 = float(self.current_pos)
                 self.current_sine_amp = 0.0
                 self.run_start_time = now
+                self._reset_pam_random_windows()
                 self._outer_last_time = now
                 self._target_force_N = 0.0
                 self.pid_pos.reset()
@@ -386,6 +403,14 @@ class PhasePamSinePositionController(Node):
             Float32(data=float(self.current_pam_pressure))
         )
         self.pub_pam_output.publish(Float32(data=float(u)))
+        if self._current_pam_high_start is not None:
+            self.pub_pam_high_start.publish(
+                Float32(data=float(self._current_pam_high_start))
+            )
+        if self._current_pam_high_end is not None:
+            self.pub_pam_high_end.publish(
+                Float32(data=float(self._current_pam_high_end))
+            )
 
     def _current_pam_target_and_mode(self, now):
         low_kpa = float(self.get_parameter('pam_low_pressure_kpa').value)
@@ -401,17 +426,55 @@ class PhasePamSinePositionController(Node):
         warmup_cycles = int(self.get_parameter('pam_warmup_cycles').value)
 
         if cycle_index < warmup_cycles:
+            self._set_current_pam_high_window(cycle_index)
             return low_kpa, 'hold_pi'
 
         phase_mod = total_phase % (2.0 * math.pi)
         cycle_phase_ratio = phase_mod / (2.0 * math.pi)
-        high_start = float(self.get_parameter('pam_high_start_ratio').value)
-        high_end = float(self.get_parameter('pam_high_end_ratio').value)
+        high_start, high_end = self._set_current_pam_high_window(cycle_index)
 
         if high_start <= cycle_phase_ratio <= high_end:
             return high_kpa, 'step_p'
 
         return low_kpa, 'step_p'
+
+    def _reset_pam_random_windows(self):
+        seed = int(self.get_parameter('pam_random_seed').value)
+        self._pam_rng = random.Random(seed)
+        self._pam_random_windows = {}
+        self._pam_last_random_cycle = -1
+        self._current_pam_high_start = None
+        self._current_pam_high_end = None
+
+    def _set_current_pam_high_window(self, cycle_index):
+        high_start, high_end = self._pam_high_window_for_cycle(cycle_index)
+        self._current_pam_high_start = high_start
+        self._current_pam_high_end = high_end
+        return high_start, high_end
+
+    def _pam_high_window_for_cycle(self, cycle_index):
+        configured_start = self._clamp(
+            float(self.get_parameter('pam_high_start_ratio').value), 0.0, 1.0
+        )
+        configured_end = self._clamp(
+            float(self.get_parameter('pam_high_end_ratio').value), 0.0, 1.0
+        )
+        window_ratio = max(0.0, configured_end - configured_start)
+        if window_ratio <= 0.0:
+            return configured_start, configured_start
+
+        randomize = bool(self.get_parameter('pam_randomize_high_window').value)
+        if not randomize:
+            return configured_start, configured_end
+
+        while self._pam_last_random_cycle < cycle_index:
+            self._pam_last_random_cycle += 1
+            high_start = self._pam_rng.uniform(0.0, 1.0 - window_ratio)
+            self._pam_random_windows[self._pam_last_random_cycle] = (
+                high_start,
+                high_start + window_ratio,
+            )
+        return self._pam_random_windows[cycle_index]
 
 
 def main(args=None):
