@@ -41,14 +41,14 @@ def generate_launch_description():
             '/sensors/head_pressure',
             '/sensors/rod_pressure',
             '/sensors/pam_pressure',
-            '/sensors/supply_pressure',
-            '/sensors/pam_valve_pressure',
+            '/sensors/supply_pressure', 
+            '/sensors/pam_valve_pressure', #流量計算
             '/sensors/loadcell_force',
             '/debug/target_position_m',
             '/debug/sine_phase_rad',
             '/debug/pam_target_pressure_kPa',
             '/debug/pam_control_pressure_kPa',
-            '/debug/pam_valve_output_V',
+            '/debug/pam_valve_output_V', #+5する.
         ],
         output='screen',
     )
@@ -80,12 +80,12 @@ def generate_launch_description():
         name='sensor_interpreter_node',
         output='screen',
         parameters=[{
-            'head_pressure_index': 0,
-            'rod_pressure_index': 1,
-            'loadcell_plus_index': 2,
-            'loadcell_minus_index': 3,
+            'head_pressure_index': 3,
+            'rod_pressure_index': 2,
+            'loadcell_plus_index': 4,
+            'loadcell_minus_index': 5,
             'pam_pressure_index': 7,
-            'pam_valve_pressure_index': 6,
+            'pam_valve_pressure_index': 1,
             'cutoff_hz_pressure': 10.0,
         }],
     )
@@ -118,8 +118,8 @@ def generate_launch_description():
             'pos_kd': 0.0,
             'pos_td': 1.0,
             'pos_output_limit': 1000.0,
-            'pres_kp': 0.024,
-            'pres_ki': 0.05,
+            'pres_kp': 0.014,
+            'pres_ki': 0.02,
             'pres_kd': 0.0,
             'pres_td': 0.01,
             'pres_output_limit': 4.9,
@@ -127,11 +127,11 @@ def generate_launch_description():
             'pam_valve_channel': pam_valve_channel_param,
             'pam_control_topic': pam_control_topic,
             'pam_control_rate_hz': 1000.0,
-            'pam_low_pressure_kpa': 100.0,
-            'pam_high_pressure_kpa': 100.0, #350.0
+            'pam_low_pressure_kpa': 60.0, #
+            'pam_high_pressure_kpa': 60.0, #350.0
             'pam_high_start_ratio': 0.10, #0.4
             'pam_high_end_ratio': 0.20, #0.5
-            'pam_warmup_cycles': 10,
+            'pam_warmup_cycles': 2,
             'pam_hold_kp': 0.03,
             'pam_hold_ki': 0.01,
             'pam_step_kp': 0.03,
@@ -159,7 +159,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        DeclareLaunchArgument('record_bag', default_value='true'),
+        DeclareLaunchArgument('record_bag', default_value='false'),
         DeclareLaunchArgument('startup_stabilize_s', default_value='5.0'),
         DeclareLaunchArgument('sine_freq_hz', default_value='1.0'),
         DeclareLaunchArgument('sine_amplitude_m', default_value='0.010'),

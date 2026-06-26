@@ -42,10 +42,10 @@ def generate_launch_description():
             'ros2', 'bag', 'record',
             '-o', bag_dir,
             '-s', 'mcap',
-            '/actuators/valve_voltage',
+            #'/actuators/valve_voltage',
             '/sensors/cylinder_position',
-            '/sensors/head_pressure',
-            '/sensors/rod_pressure',
+            #'/sensors/head_pressure',
+            #'/sensors/rod_pressure',
             '/sensors/pam_pressure',
             '/sensors/supply_pressure',
             '/sensors/pam_valve_pressure',
@@ -55,8 +55,8 @@ def generate_launch_description():
             '/debug/pam_target_pressure_kPa',
             '/debug/pam_control_pressure_kPa',
             '/debug/pam_valve_output_V',
-            '/debug/pam_high_start_ratio',
-            '/debug/pam_high_end_ratio',
+            #'/debug/pam_high_start_ratio',
+            #'/debug/pam_high_end_ratio',
         ],
         output='screen',
     )
@@ -136,12 +136,12 @@ def generate_launch_description():
             'pam_control_topic': pam_control_topic,
             'pam_control_rate_hz': 1000.0,
             'pam_low_pressure_kpa': 100.0,
-            'pam_high_pressure_kpa': pam_high_pressure_param,
+            'pam_high_pressure_kpa': 100.0, #350.0
             'pam_high_start_ratio': 0.10, #0.4
             'pam_high_end_ratio': 0.20, #0.5
             'pam_randomize_high_window': True,
-            'pam_random_seed': pam_random_seed_param,
-            'pam_warmup_cycles': 10,
+            'pam_random_seed': 3, #デフォは5
+            'pam_warmup_cycles': 5,
             'pam_hold_kp': 0.03,
             'pam_hold_ki': 0.01,
             'pam_step_kp': 0.03,
