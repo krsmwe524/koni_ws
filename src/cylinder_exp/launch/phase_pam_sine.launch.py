@@ -112,13 +112,13 @@ def generate_launch_description():
             'outer_rate_hz': 500.0,
             'inner_rate_hz': 1000.0,
             'base_pressure_kpa': 250.0,
-            'supply_pressure_kpa': 600.0,
-            'pos_kp': 3500.0,
-            'pos_ki': 0.0,
+            'supply_pressure_kpa': 500.0,
+            'pos_kp': 5800.0,
+            'pos_ki': 200.0,
             'pos_kd': 0.0,
             'pos_td': 1.0,
             'pos_output_limit': 1000.0,
-            'pres_kp': 0.014,
+            'pres_kp': 0.024,
             'pres_ki': 0.02,
             'pres_kd': 0.0,
             'pres_td': 0.01,
@@ -127,15 +127,15 @@ def generate_launch_description():
             'pam_valve_channel': pam_valve_channel_param,
             'pam_control_topic': pam_control_topic,
             'pam_control_rate_hz': 1000.0,
-            'pam_low_pressure_kpa': 60.0, #
-            'pam_high_pressure_kpa': 60.0, #350.0
-            'pam_high_start_ratio': 0.10, #0.4
-            'pam_high_end_ratio': 0.20, #0.5
-            'pam_warmup_cycles': 2,
-            'pam_hold_kp': 0.03,
-            'pam_hold_ki': 0.01,
+            'pam_low_pressure_kpa': 30.0, #
+            'pam_high_pressure_kpa': 30.0, #350.0
+            'pam_high_start_ratio': 0.50, #0.4
+            'pam_high_end_ratio': 0.60, #0.5
+            'pam_warmup_cycles': 4,
+            'pam_hold_kp': 0.06,
+            'pam_hold_ki': 0.02,
             'pam_step_kp': 0.03,
-            'pam_step_ki': 0.0,
+            'pam_step_ki': 0.01,
             'pam_output_limit': 4.9,
         }],
     )
@@ -159,7 +159,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        DeclareLaunchArgument('record_bag', default_value='false'),
+        DeclareLaunchArgument('record_bag', default_value='true'),
         DeclareLaunchArgument('startup_stabilize_s', default_value='5.0'),
         DeclareLaunchArgument('sine_freq_hz', default_value='1.0'),
         DeclareLaunchArgument('sine_amplitude_m', default_value='0.010'),

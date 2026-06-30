@@ -88,12 +88,12 @@ def generate_launch_description():
         name='sensor_interpreter_node',
         output='screen',
         parameters=[{
-            'head_pressure_index': 0,
-            'rod_pressure_index': 1,
-            'loadcell_plus_index': 2,
-            'loadcell_minus_index': 3,
+            'head_pressure_index': 3,
+            'rod_pressure_index': 2,
+            'loadcell_plus_index': 4,
+            'loadcell_minus_index': 5,
             'pam_pressure_index': 7,
-            'pam_valve_pressure_index': 6,
+            'pam_valve_pressure_index': 1,
             'cutoff_hz_pressure': 10.0,
         }],
     )
@@ -120,9 +120,9 @@ def generate_launch_description():
             'outer_rate_hz': 500.0,
             'inner_rate_hz': 1000.0,
             'base_pressure_kpa': 250.0,
-            'supply_pressure_kpa': 600.0,
-            'pos_kp': 3500.0,
-            'pos_ki': 0.0,
+            'supply_pressure_kpa': 500.0,
+            'pos_kp': 5800.0,
+            'pos_ki': 200.0,
             'pos_kd': 0.0,
             'pos_td': 1.0,
             'pos_output_limit': 1000.0,
@@ -135,12 +135,12 @@ def generate_launch_description():
             'pam_valve_channel': pam_valve_channel_param,
             'pam_control_topic': pam_control_topic,
             'pam_control_rate_hz': 1000.0,
-            'pam_low_pressure_kpa': 100.0,
-            'pam_high_pressure_kpa': 100.0, #350.0
+            'pam_low_pressure_kpa': 30.0,
+            'pam_high_pressure_kpa': 80.0, #350.0
             'pam_high_start_ratio': 0.10, #0.4
             'pam_high_end_ratio': 0.20, #0.5
             'pam_randomize_high_window': True,
-            'pam_random_seed': 3, #デフォは5
+            'pam_random_seed': 4, #デフォは5
             'pam_warmup_cycles': 5,
             'pam_hold_kp': 0.03,
             'pam_hold_ki': 0.01,

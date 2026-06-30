@@ -37,7 +37,7 @@ class SensorInterpreterNode(Node):
         self.declare_parameter('supply_pressure_index', 6)
         self.declare_parameter('v0_pressure_head', 1.0)
         self.declare_parameter('v0_pressure_rod', 1.0)
-        self.declare_parameter('v0_pressure_pam', 1.015)
+        self.declare_parameter('v0_pressure_pam', 0.988)
         self.declare_parameter('v0_pressure_pam_valve', 0.988)
         self.declare_parameter('v0_pressure_supply', 0.988)
         self.declare_parameter('slope_kPa_per_V_head', 250.0)
