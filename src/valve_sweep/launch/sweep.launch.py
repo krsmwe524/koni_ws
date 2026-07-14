@@ -1,5 +1,7 @@
 from launch import LaunchDescription
-from launch.actions import ExecuteProcess
+from launch.actions import DeclareLaunchArgument, ExecuteProcess
+from launch.conditions import IfCondition
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from datetime import datetime
 import os
@@ -7,22 +9,28 @@ import os
 
 def generate_launch_description():
     bag_dir = os.path.expanduser(
-        f'~/koni_log/Neutral_{datetime.now().strftime("%Y%m%d_%H%M%S")}_3')
+        f'~/koni_log/sweep_{datetime.now().strftime("%Y%m%d_%H%M%S")}')
+    record_bag = LaunchConfiguration('record_bag')
+
     bag_record = ExecuteProcess(
+        condition=IfCondition(record_bag),
         cmd=[
             'ros2', 'bag', 'record',
             '-o', bag_dir,
             '-s', 'mcap',
-            # '/actuators/valve_voltage',
             '/ai1616llpe/voltage',
+            '/actuators/valve_voltage',
             '/debug/sweep_voltage_V',
-            #'/debug/sweep_flow_raw_V',
+            '/debug/sweep_flow_raw_V',
+            '/debug/sweep_is_measuring',
+            '/debug/sweep_step_index',
         ],
         output='screen',
     )
 
     return LaunchDescription([
-      # bag_record,
+        DeclareLaunchArgument('record_bag', default_value='true'),
+
         # AI ボードノード (センサ読み取り)
         Node(
             package='control_box',
@@ -60,4 +68,5 @@ def generate_launch_description():
                 'one_way':          True, # True: 片道, False: 往復
             }],
         ),
+        bag_record,
     ])

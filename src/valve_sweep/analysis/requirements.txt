@@ -1,0 +1,7 @@
+jupyter
+matplotlib
+mcap
+mcap-ros2-support
+numpy
+pandas
+PyYAML

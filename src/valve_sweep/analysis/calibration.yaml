@@ -1,0 +1,29 @@
+channels:
+  pam_valve_pressure: 1
+  supply_pressure: 6
+  flowmeter: 15
+
+pressure:
+  slope_kpa_per_v: 250.0
+  pam_valve_zero_v: 0.983037
+  supply_zero_v: 0.988248
+
+flowmeter:
+  zero_v: 3.0
+  slope_l_min_per_v: 100.0
+  full_scale_l_min: 200.0
+
+air:
+  specific_gas_constant_j_kg_k: 287.05
+  heat_capacity_ratio: 1.4
+  upstream_temperature_k: 293.15
+  atmospheric_pressure_kpa: 101.325
+  anr_temperature_k: 293.15
+  anr_pressure_kpa: 101.325
+
+model:
+  critical_pressure_ratio: 0.4
+
+analysis:
+  tail_duration_s: 0.5
+  sync_tolerance_s: 0.1
