@@ -51,7 +51,7 @@ def generate_launch_description():
             output='screen',
             parameters=[{
                 'valve_channel':  1, #1と3 1はヘッド 3はロッド
-                'flowmeter_channel': 1, #流量計のチャンネル
+                'flowmeter_channel': 15, #流量計のチャンネル
                 'v_start':          4.6,
                 'v_end':            4.6,
                 'v_step':           0.05, #0.05

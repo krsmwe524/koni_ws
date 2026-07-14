@@ -31,12 +31,21 @@ def generate_launch_description():
             name='sensor_interpreter_node',
             output='screen',
             parameters=[{
-                'head_pressure_index':  1,
-                'rod_pressure_index':   0,
-                'loadcell_plus_index':  2,
-                'loadcell_minus_index': 3,
-                'pam_pressure_index':   7,
-                'cutoff_hz_pressure':   10.0,
+                # Keep this wiring map aligned with
+                # cylinder_exp/launch/phase_pam_sine.launch.py.
+                'head_pressure_index':       3,
+                'rod_pressure_index':        2,
+                'loadcell_plus_index':       4,
+                'loadcell_minus_index':      5,
+                'pam_pressure_index':        7,
+                'pam_valve_pressure_index':  1,
+                'cutoff_hz_pressure':        10.0,
+                # TOKYO METER APM-L-200D: 3 V = 0 L/min,
+                # 1～5 V = -200～200 L/min (ANR).
+                'flowmeter_index':                 15,
+                'v0_flowmeter':                    3.0,
+                'slope_l_min_per_v_flowmeter':   100.0,
+                'cutoff_hz_flow':                  10.0,
             }],
         ),
     ])

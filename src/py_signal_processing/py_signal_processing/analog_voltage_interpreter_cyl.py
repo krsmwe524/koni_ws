@@ -17,6 +17,7 @@ class SensorInterpreterNode(Node):
       /sensors/pam_pressure        : Float32 [kPa] (PAM直前圧力)
       /sensors/pam_valve_pressure  : Float32 [kPa] (PAMバルブ直後圧力)
       /sensors/supply_pressure     : Float32 [kPa] (供給圧力)
+      /sensors/flow_rate           : Float32 [L/min (ANR)] (流量)
     """
     def __init__(self):
         super().__init__('sensor_interpreter')
@@ -46,6 +47,12 @@ class SensorInterpreterNode(Node):
         self.declare_parameter('slope_kPa_per_V_pam_valve', 250.0)
         self.declare_parameter('slope_kPa_per_V_supply', 250.0)
         self.declare_parameter('cutoff_hz_pressure', 20.0)
+
+        # 流量計 (TOKYO METER APM-L-200D, -200～200 L/min)
+        self.declare_parameter('flowmeter_index', 15)
+        self.declare_parameter('v0_flowmeter', 3.0)
+        self.declare_parameter('slope_l_min_per_v_flowmeter', 100.0)
+        self.declare_parameter('cutoff_hz_flow', 20.0)
 
         # ロードセル
         self.declare_parameter('loadcell_plus_index', 2)
@@ -79,6 +86,12 @@ class SensorInterpreterNode(Node):
         self.kS_press    = self.get_parameter('slope_kPa_per_V_supply').value
         self.cutoff_pres = self.get_parameter('cutoff_hz_pressure').value
 
+        self.flow_idx = self.get_parameter('flowmeter_index').value
+        self.v0_flow = self.get_parameter('v0_flowmeter').value
+        self.k_flow = self.get_parameter(
+            'slope_l_min_per_v_flowmeter').value
+        self.cutoff_flow = self.get_parameter('cutoff_hz_flow').value
+
         self.lc_p_idx    = self.get_parameter('loadcell_plus_index').value
         self.lc_m_idx    = self.get_parameter('loadcell_minus_index').value
         self.lc_v0       = self.get_parameter('v0_loadcell').value
@@ -92,6 +105,7 @@ class SensorInterpreterNode(Node):
         self.lpf_pam    = LowPassFilter(self.cutoff_pres)
         self.lpf_pam_valve = LowPassFilter(self.cutoff_pres)
         self.lpf_supply = LowPassFilter(self.cutoff_pres)
+        self.lpf_flow   = LowPassFilter(self.cutoff_flow)
         self.lpf_lc     = LowPassFilter(self.cutoff_lc)
 
         self.pub_pos_m      = self.create_publisher(Float32, '/sensors/cylinder_position', 10)
@@ -101,6 +115,8 @@ class SensorInterpreterNode(Node):
         self.pub_pam_kpa    = self.create_publisher(Float32, '/sensors/pam_pressure', 10)
         self.pub_pam_valve_kpa = self.create_publisher(Float32, '/sensors/pam_valve_pressure', 10)
         self.pub_supply_kpa = self.create_publisher(Float32, '/sensors/supply_pressure', 10)
+        self.pub_flow_l_min = self.create_publisher(
+            Float32, '/sensors/flow_rate', 10)
 
         self.sub_cnt = self.create_subscription(Float32MultiArray, self.cnt_topic, self._cb_count, 10)
         self.sub_ai  = self.create_subscription(Float32MultiArray, self.ai_topic, self._cb_voltage, 10)
@@ -171,6 +187,14 @@ class SensorInterpreterNode(Node):
             raw_P_supply_kPa = (V_supply - self.v0S_press) * self.kS_press
             filtered_P_supply = self.lpf_supply.update(raw_P_supply_kPa, current_time_sec)
             self.pub_supply_kpa.publish(Float32(data=filtered_P_supply))
+
+        # 流量計の処理（上流から下流を正方向とする）
+        if self.flow_idx < len(arr):
+            V_flow = float(arr[self.flow_idx])
+            raw_flow_l_min = (V_flow - self.v0_flow) * self.k_flow
+            filtered_flow_l_min = self.lpf_flow.update(
+                raw_flow_l_min, current_time_sec)
+            self.pub_flow_l_min.publish(Float32(data=filtered_flow_l_min))
 
         # --- ロードセルの処理 ---
         if self.lc_p_idx < len(arr) and self.lc_m_idx < len(arr):
