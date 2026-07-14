@@ -50,10 +50,4 @@ setup(
     description='TODO: Package description',
     license='TODO: License declaration',
     tests_require=['pytest'],
-    entry_points={
-        'console_scripts': [
-            'data_logger = sensing.data_logger:main',
-            'analog_interpreter = sensing.analog_interpreter:main',
-        ],
-    },
 )

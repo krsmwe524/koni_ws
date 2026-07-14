@@ -1,27 +1,9 @@
 from launch import LaunchDescription
-from launch.actions import ExecuteProcess
 from launch_ros.actions import Node
-from datetime import datetime
-import os
 
 
 def generate_launch_description():
-    bag_dir = os.path.expanduser(
-        f'~/koni_log/wakai_MVC2_{datetime.now().strftime("%Y%m%d_%H%M%S")}')
-
-    bag_record = ExecuteProcess(
-        cmd=[
-            'ros2', 'bag', 'record',
-            '-o', bag_dir,
-            '-s', 'mcap',
-            '-e', '/(sensors|RMS)/.*',
-        ],
-        output='screen',
-    )
-
     return LaunchDescription([
-      # bag_record,
-
         # AIボードノード
         Node(
             package='control_box',
@@ -32,30 +14,23 @@ def generate_launch_description():
 
         # センサ解釈ノード
         Node(
-            package='sensing',
-            executable='analog_interpreter',
-            name='analog_interpreter_node',
+            package='py_signal_processing',
+            executable='analog_voltage_interpreter_cyl',
+            name='sensor_interpreter_node',
             output='screen',
             parameters=[{
-                'ai_topic':              '/ai1616llpe/voltage',
-                # 圧力センサ (ch7)
-                'pressure_index':        7,
-                'v0_pressure':           1.0,
-                'slope_kPa_per_V':       250.0,
-                # ロードセル (ch・ゲインは実機に合わせて変更)
-                'loadcell_plus_index':   2,
-                'loadcell_minus_index':  3,
-                'v0_loadcell':           0.0,
-                'kg_per_V_loadcell':     7.9186,
-                'gravity_acceleration':  9.80665,
-                # ワイヤ式長さセンサ (ch6)
-                'wire_index':            6,
-                'pos_fullscale_v':       5.0,
-                'pos_fullscale_mm':      1000.0,
-                # EMG (ch0: 三角筋, ch1: 上腕三頭筋)
-                'emg_deltoid_index':     0,
-                'emg_triceps_index':     1,
-                'emg_rms_window_ms':     500,
+                'head_pressure_index':       3,
+                'rod_pressure_index':        2,
+                'loadcell_plus_index':       4,
+                'loadcell_minus_index':      5,
+                'pam_pressure_index':        7,
+                'pam_valve_pressure_index':  1,
+                'supply_pressure_index':     6,
+                'cutoff_hz_pressure':        10.0,
+                'flowmeter_index':           15,
+                'v0_flowmeter':              3.0,
+                'slope_l_min_per_v_flowmeter': 100.0,
+                'cutoff_hz_flow':            10.0,
             }],
         ),
     ])
