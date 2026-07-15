@@ -24,6 +24,9 @@ def generate_launch_description():
             '/debug/sweep_flow_raw_V',
             '/debug/sweep_is_measuring',
             '/debug/sweep_step_index',
+            '/sensors/supply_pressure',
+            '/sensors/pam_valve_pressure',
+            '/sensors/flow_rate',
         ],
         output='screen',
     )
@@ -49,6 +52,21 @@ def generate_launch_description():
             name='ao1608llpe_node',
             output='screen',
             
+        ),
+
+        # センサ物理量変換ノード
+        Node(
+            package='py_signal_processing',
+            executable='analog_voltage_interpreter_cyl',
+            name='sensor_interpreter_node',
+            output='screen',
+            parameters=[{
+                'pam_valve_pressure_index': 1,
+                'supply_pressure_index': 6,
+                'flowmeter_index': 15,
+                'cutoff_hz_pressure': 10.0,
+                'cutoff_hz_flow': 10.0,
+            }],
         ),
 
         # スイープノード
