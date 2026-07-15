@@ -79,12 +79,12 @@ def generate_launch_description():
                 'valve_channel':  1, #1と3 1はヘッド 3はロッド
                 'flowmeter_channel': 15, #流量計のチャンネル
                 'v_start':          4.6,
-                'v_end':            4.6,
-                'v_step':           0.05, #0.05
-                'hold_time_s':      12.0,
+                'v_end':            6.6,
+                'v_step':           0.2, #0.05
+                'hold_time_s':      1.0,
                 'control_rate_hz':  100.0,
                 'one_way':          True, # True: 片道, False: 往復
             }],
         ),
-        bag_record,
+        #bag_record,
     ])
