@@ -49,8 +49,10 @@ The notebooks implement the supplied effective-opening equation:
 
 ```text
 S_e = m_dot / (P_up * sqrt(kappa/(R*T_up)
-      * (2/(kappa+1))^((kappa+1)/(kappa-1)) * phi(r)))
+      * (2/(kappa+1))^((kappa+1)/(kappa-1))) * phi(r))
 ```
 
 where `r = P_down/P_up` uses absolute pressure, and the provisional critical
-pressure ratio is `h = 0.4`. Results are reported in square millimetres.
+pressure ratio is `h = 0.4`. Here, `phi(r)` is the elliptic approximation and
+is applied directly to the choked mass-flow coefficient; it is not placed
+inside another square root. Results are reported in square millimetres.

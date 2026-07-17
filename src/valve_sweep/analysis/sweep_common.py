@@ -241,8 +241,12 @@ def add_effective_area(
     pressure_pa = result['upstream_pressure_kpa_abs'] * 1000.0
     critical_term = (2.0 / (kappa + 1.0)) ** (
         (kappa + 1.0) / (kappa - 1.0))
-    denominator = pressure_pa * np.sqrt(
-        kappa / (gas_constant * upstream_temperature) * critical_term * phi)
+    # The elliptic approximation scales the choked mass-flow coefficient by
+    # phi(r).  phi is already a square-root-shaped factor, so it must remain
+    # outside the square root of the choked-flow term.
+    choked_flow_coefficient = np.sqrt(
+        kappa / (gas_constant * upstream_temperature) * critical_term)
+    denominator = pressure_pa * choked_flow_coefficient * phi
     result['effective_area_m2'] = np.where(
         denominator > 0.0,
         result['mass_flow_kg_s'] / denominator,
