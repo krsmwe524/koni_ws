@@ -40,8 +40,8 @@ def generate_launch_description():
 
     return LaunchDescription([
         DeclareLaunchArgument('record_bag', default_value='true'),
-        DeclareLaunchArgument('v_start', default_value='5.0'),
-        DeclareLaunchArgument('v_end', default_value='6.7'),
+        DeclareLaunchArgument('v_start', default_value='6.0'),
+        DeclareLaunchArgument('v_end', default_value='8.0'),
         DeclareLaunchArgument('v_step', default_value='0.1'),
         DeclareLaunchArgument('hold_time_s', default_value='1.0'),
         DeclareLaunchArgument('recharge_time_s', default_value='1.5'),
