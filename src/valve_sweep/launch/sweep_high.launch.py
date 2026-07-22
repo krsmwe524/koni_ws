@@ -40,9 +40,9 @@ def generate_launch_description():
 
     return LaunchDescription([
         DeclareLaunchArgument('record_bag', default_value='true'),
-        DeclareLaunchArgument('v_start', default_value='6.0'),
-        DeclareLaunchArgument('v_end', default_value='8.0'),
-        DeclareLaunchArgument('v_step', default_value='0.1'),
+        DeclareLaunchArgument('v_start', default_value='5.2'),
+        DeclareLaunchArgument('v_end', default_value='10.0'),
+        DeclareLaunchArgument('v_step', default_value='0.2'),
         DeclareLaunchArgument('hold_time_s', default_value='1.0'),
         DeclareLaunchArgument('recharge_time_s', default_value='1.5'),
         DeclareLaunchArgument('neutral_voltage', default_value='5.0'),
@@ -101,5 +101,5 @@ def generate_launch_description():
                 'recharge_between_steps': True,
             }],
         ),
-       bag_record,
+        bag_record,
     ])
