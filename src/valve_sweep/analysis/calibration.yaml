@@ -5,8 +5,8 @@ channels:
 
 pressure:
   slope_kpa_per_v: 250.0
-  pam_valve_zero_v: 0.983037
-  supply_zero_v: 0.988248
+  pam_valve_zero_v: 1.00473
+  supply_zero_v: 0.96575
 
 flowmeter:
   zero_v: 3.0
