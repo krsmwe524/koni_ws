@@ -19,7 +19,7 @@ def _int_parameter(name):
 
 def generate_launch_description():
     bag_dir = os.path.expanduser(
-        f'~/koni_log/sweep_high_{datetime.now().strftime("%Y%m%d_%H%M%S")}_340'
+        f'~/koni_log/sweep_high_{datetime.now().strftime("%Y%m%d_%H%M%S")}_340_48_63'
     )
     record_bag = LaunchConfiguration('record_bag')
 
@@ -45,15 +45,15 @@ def generate_launch_description():
 
     return LaunchDescription([
         DeclareLaunchArgument('record_bag', default_value='true'),
-        DeclareLaunchArgument('v_start', default_value='5.2'),
-        DeclareLaunchArgument('v_end', default_value='10.0'),
-        DeclareLaunchArgument('v_step', default_value='0.2'),
-        DeclareLaunchArgument('hold_time_s', default_value='1.0'),
-        DeclareLaunchArgument('recharge_time_s', default_value='1.5'),
+        DeclareLaunchArgument('v_start', default_value='6.5'),
+        DeclareLaunchArgument('v_end', default_value='6.3'),
+        DeclareLaunchArgument('v_step', default_value='0.1'),
+        DeclareLaunchArgument('hold_time_s', default_value='533333.5'),
+        DeclareLaunchArgument('recharge_time_s', default_value='1.0'),
         DeclareLaunchArgument('neutral_voltage', default_value='5.0'),
         DeclareLaunchArgument(
             'flowmeter_full_scale_l_min',
-            default_value='200',
+            default_value='1600',
             description='Flowmeter full scale: 200 or 1600 L/min.',
         ),
 
@@ -113,5 +113,5 @@ def generate_launch_description():
                 'recharge_between_steps': True,
             }],
         ),
-        bag_record,
+        # bag_record,
     ])
