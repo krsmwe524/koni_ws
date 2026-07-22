@@ -13,6 +13,10 @@ def _float_parameter(name):
     return ParameterValue(LaunchConfiguration(name), value_type=float)
 
 
+def _int_parameter(name):
+    return ParameterValue(LaunchConfiguration(name), value_type=int)
+
+
 def generate_launch_description():
     bag_dir = os.path.expanduser(
         f'~/koni_log/sweep_high_{datetime.now().strftime("%Y%m%d_%H%M%S")}_340'
@@ -34,6 +38,7 @@ def generate_launch_description():
             '/sensors/supply_pressure',
             '/sensors/pam_valve_pressure',
             '/sensors/flow_rate',
+            '/sensors/flowmeter_full_scale',
         ],
         output='screen',
     )
@@ -46,6 +51,11 @@ def generate_launch_description():
         DeclareLaunchArgument('hold_time_s', default_value='1.0'),
         DeclareLaunchArgument('recharge_time_s', default_value='1.5'),
         DeclareLaunchArgument('neutral_voltage', default_value='5.0'),
+        DeclareLaunchArgument(
+            'flowmeter_full_scale_l_min',
+            default_value='200',
+            description='Flowmeter full scale: 200 or 1600 L/min.',
+        ),
 
         # AI board node (sensor acquisition)
         Node(
@@ -76,6 +86,8 @@ def generate_launch_description():
                 'pam_valve_pressure_index': 1,
                 'supply_pressure_index': 6,
                 'flowmeter_index': 15,
+                'flowmeter_full_scale_l_min': _int_parameter(
+                    'flowmeter_full_scale_l_min'),
                 'cutoff_hz_pressure': 10.0,
                 'cutoff_hz_flow': 10.0,
             }],

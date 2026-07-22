@@ -16,11 +16,11 @@ before calculating the pressure ratio.
 
 ## Flow conversion
 
-The TOKYO METER APM-L-200D output is treated as 1–5 V corresponding to
--200–200 L/min (ANR):
+The TOKYO METER APM-L output is treated as 1–5 V corresponding to
+`-FS`–`+FS` L/min (ANR), where `FS` is either 200 or 1600 L/min:
 
 ```text
-Q_ANR = (V - 3) * 100 [L/min]
+Q_ANR = (V - 3) * FS/2 [L/min]
 ```
 
 The manufacturer's ANR reference conditions are 20 °C and 101.325 kPa. The
@@ -42,6 +42,22 @@ directly to its `.mcap` file.
 By default, only the final 0.5 seconds of each interval marked by
 `/debug/sweep_is_measuring` are averaged. Change `tail_duration_s` in
 `calibration.yaml` if needed.
+
+## Flowmeter selection
+
+The sweep and sensor-monitoring launch files accept a flowmeter full scale of
+either 200 or 1600 L/min. The default is 200 L/min:
+
+```bash
+ros2 launch valve_sweep sweep_high.launch.py flowmeter_full_scale_l_min:=1600
+```
+
+Both meters are treated as 1–5 V corresponding to `-FS`–`+FS`, with zero flow
+at 3 V. The selected full scale is published on
+`/sensors/flowmeter_full_scale` and is included whenever sweep bag recording
+is enabled. New bags are therefore interpreted automatically. For older bags
+without this topic, the analysis falls back to the flowmeter values in
+`calibration.yaml`.
 
 ## Model
 

@@ -3,6 +3,7 @@ from launch.actions import DeclareLaunchArgument, ExecuteProcess
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 from datetime import datetime
 import os
 
@@ -11,6 +12,8 @@ def generate_launch_description():
     bag_dir = os.path.expanduser(
         f'~/koni_log/sweep_{datetime.now().strftime("%Y%m%d_%H%M%S")}')
     record_bag = LaunchConfiguration('record_bag')
+    flowmeter_full_scale = ParameterValue(
+        LaunchConfiguration('flowmeter_full_scale_l_min'), value_type=int)
 
     bag_record = ExecuteProcess(
         condition=IfCondition(record_bag),
@@ -27,12 +30,18 @@ def generate_launch_description():
             '/sensors/supply_pressure',
             '/sensors/pam_valve_pressure',
             '/sensors/flow_rate',
+            '/sensors/flowmeter_full_scale',
         ],
         output='screen',
     )
 
     return LaunchDescription([
         DeclareLaunchArgument('record_bag', default_value='true'),
+        DeclareLaunchArgument(
+            'flowmeter_full_scale_l_min',
+            default_value='200',
+            description='Flowmeter full scale: 200 or 1600 L/min.',
+        ),
 
         # AI ボードノード (センサ読み取り)
         Node(
@@ -64,6 +73,7 @@ def generate_launch_description():
                 'pam_valve_pressure_index': 1,
                 'supply_pressure_index': 6,
                 'flowmeter_index': 15,
+                'flowmeter_full_scale_l_min': flowmeter_full_scale,
                 'cutoff_hz_pressure': 10.0,
                 'cutoff_hz_flow': 10.0,
             }],

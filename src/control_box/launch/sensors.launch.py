@@ -1,8 +1,20 @@
 from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
+
 
 def generate_launch_description():
+    flowmeter_full_scale = ParameterValue(
+        LaunchConfiguration('flowmeter_full_scale_l_min'), value_type=int)
+
     return LaunchDescription([
+        DeclareLaunchArgument(
+            'flowmeter_full_scale_l_min',
+            default_value='200',
+            description='Flowmeter full scale: 200 or 1600 L/min.',
+        ),
         # AIボード
         Node(
             package='control_box',
@@ -40,12 +52,12 @@ def generate_launch_description():
                 'pam_pressure_index':        7,
                 'pam_valve_pressure_index':  1,
                 'cutoff_hz_pressure':        10.0,
-                # TOKYO METER APM-L-200D: 3 V = 0 L/min,
-                # 1～5 V = -200～200 L/min (ANR).
-                'flowmeter_index':                 15,
-                'v0_flowmeter':                    3.0,
-                'slope_l_min_per_v_flowmeter':   100.0,
-                'cutoff_hz_flow':                  10.0,
+                # TOKYO METER APM-L: 3 V = 0 L/min,
+                # 1～5 V = -FS～FS L/min (ANR).
+                'flowmeter_index':             15,
+                'v0_flowmeter':                3.0,
+                'flowmeter_full_scale_l_min': flowmeter_full_scale,
+                'cutoff_hz_flow':              10.0,
             }],
         ),
     ])

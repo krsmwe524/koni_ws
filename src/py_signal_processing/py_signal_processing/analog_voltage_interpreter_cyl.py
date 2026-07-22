@@ -18,6 +18,7 @@ class SensorInterpreterNode(Node):
       /sensors/pam_valve_pressure  : Float32 [kPa] (PAMバルブ直後圧力)
       /sensors/supply_pressure     : Float32 [kPa] (供給圧力)
       /sensors/flow_rate           : Float32 [L/min (ANR)] (流量)
+      /sensors/flowmeter_full_scale: Float32 [L/min] (流量計フルスケール)
     """
     def __init__(self):
         super().__init__('sensor_interpreter')
@@ -48,10 +49,10 @@ class SensorInterpreterNode(Node):
         self.declare_parameter('slope_kPa_per_V_supply', 250.0)
         self.declare_parameter('cutoff_hz_pressure', 20.0)
 
-        # 流量計 (TOKYO METER APM-L-200D, -200～200 L/min)
+        # 流量計 (TOKYO METER APM-L, 1～5 V = -FS～FS, 3 V = 0)
         self.declare_parameter('flowmeter_index', 15)
         self.declare_parameter('v0_flowmeter', 3.0)
-        self.declare_parameter('slope_l_min_per_v_flowmeter', 100.0)
+        self.declare_parameter('flowmeter_full_scale_l_min', 200)
         self.declare_parameter('cutoff_hz_flow', 20.0)
 
         # ロードセル
@@ -88,8 +89,13 @@ class SensorInterpreterNode(Node):
 
         self.flow_idx = self.get_parameter('flowmeter_index').value
         self.v0_flow = self.get_parameter('v0_flowmeter').value
-        self.k_flow = self.get_parameter(
-            'slope_l_min_per_v_flowmeter').value
+        self.flow_full_scale = self.get_parameter(
+            'flowmeter_full_scale_l_min').value
+        if self.flow_full_scale not in (200, 1600):
+            raise ValueError(
+                'flowmeter_full_scale_l_min must be either 200 or 1600')
+        # 3 Vから1 Vまたは5 Vまでの2 Vが、それぞれ±フルスケール。
+        self.k_flow = self.flow_full_scale / 2.0
         self.cutoff_flow = self.get_parameter('cutoff_hz_flow').value
 
         self.lc_p_idx    = self.get_parameter('loadcell_plus_index').value
@@ -117,11 +123,16 @@ class SensorInterpreterNode(Node):
         self.pub_supply_kpa = self.create_publisher(Float32, '/sensors/supply_pressure', 10)
         self.pub_flow_l_min = self.create_publisher(
             Float32, '/sensors/flow_rate', 10)
+        self.pub_flow_full_scale = self.create_publisher(
+            Float32, '/sensors/flowmeter_full_scale', 10)
 
         self.sub_cnt = self.create_subscription(Float32MultiArray, self.cnt_topic, self._cb_count, 10)
         self.sub_ai  = self.create_subscription(Float32MultiArray, self.ai_topic, self._cb_voltage, 10)
 
-        self.get_logger().info("Sensor Interpreter Node Started with Filters & Loadcell.")
+        self.get_logger().info(
+            'Sensor Interpreter Node Started with Filters & Loadcell. '
+            f'Flowmeter: +/-{self.flow_full_scale} L/min '
+            f'({self.k_flow} L/min/V).')
 
     def _cb_count(self, msg: Float32MultiArray):
         """ 位置(m)に変換 """
@@ -195,6 +206,8 @@ class SensorInterpreterNode(Node):
             filtered_flow_l_min = self.lpf_flow.update(
                 raw_flow_l_min, current_time_sec)
             self.pub_flow_l_min.publish(Float32(data=filtered_flow_l_min))
+            self.pub_flow_full_scale.publish(
+                Float32(data=float(self.flow_full_scale)))
 
         # --- ロードセルの処理 ---
         if self.lc_p_idx < len(arr) and self.lc_m_idx < len(arr):

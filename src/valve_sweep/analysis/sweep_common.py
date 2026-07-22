@@ -14,7 +14,14 @@ AI_TOPIC = '/ai1616llpe/voltage'
 VOLTAGE_TOPIC = '/debug/sweep_voltage_V'
 MEASURING_TOPIC = '/debug/sweep_is_measuring'
 STEP_TOPIC = '/debug/sweep_step_index'
-REQUIRED_TOPICS = (AI_TOPIC, VOLTAGE_TOPIC, MEASURING_TOPIC, STEP_TOPIC)
+FLOW_FULL_SCALE_TOPIC = '/sensors/flowmeter_full_scale'
+BAG_TOPICS = (
+    AI_TOPIC,
+    VOLTAGE_TOPIC,
+    MEASURING_TOPIC,
+    STEP_TOPIC,
+    FLOW_FULL_SCALE_TOPIC,
+)
 
 
 def load_config(path: str | Path = 'calibration.yaml') -> dict:
@@ -71,10 +78,11 @@ def load_sweep_bag(bag_path: str | Path, config: dict) -> pd.DataFrame:
         VOLTAGE_TOPIC: [],
         MEASURING_TOPIC: [],
         STEP_TOPIC: [],
+        FLOW_FULL_SCALE_TOPIC: [],
     }
 
     for mcap_path in find_mcap_files(bag_path):
-        for record in read_ros2_messages(mcap_path, topics=REQUIRED_TOPICS):
+        for record in read_ros2_messages(mcap_path, topics=BAG_TOPICS):
             topic = record.channel.topic
             timestamp = int(record.log_time_ns)
             value = record.ros_msg.data
@@ -124,6 +132,13 @@ def load_sweep_bag(bag_path: str | Path, config: dict) -> pd.DataFrame:
         'step_index',
         tolerance_ns,
     )
+    if scalar_records[FLOW_FULL_SCALE_TOPIC]:
+        samples = _merge_state(
+            samples,
+            scalar_records[FLOW_FULL_SCALE_TOPIC],
+            'flowmeter_full_scale_l_min',
+            tolerance_ns,
+        )
 
     pressure = config['pressure']
     samples['supply_pressure_kpa_g'] = (
@@ -134,9 +149,21 @@ def load_sweep_bag(bag_path: str | Path, config: dict) -> pd.DataFrame:
     ) * pressure['slope_kpa_per_v']
 
     flowmeter = config['flowmeter']
+    if 'flowmeter_full_scale_l_min' not in samples:
+        samples['flowmeter_full_scale_l_min'] = flowmeter[
+            'full_scale_l_min']
+    samples['flowmeter_full_scale_l_min'] = samples[
+        'flowmeter_full_scale_l_min'].fillna(flowmeter['full_scale_l_min'])
+    recorded_scale = samples['flowmeter_full_scale_l_min'].isin([200, 1600])
+    flow_slope = pd.Series(
+        float(flowmeter['slope_l_min_per_v']),
+        index=samples.index,
+    )
+    flow_slope.loc[recorded_scale] = (
+        samples.loc[recorded_scale, 'flowmeter_full_scale_l_min'] / 2.0)
     samples['flow_l_min_anr'] = (
         samples['flow_voltage_v'] - flowmeter['zero_v']
-    ) * flowmeter['slope_l_min_per_v']
+    ) * flow_slope
 
     time_origin_ns = int(samples['time_ns'].min())
     samples['time_s'] = (samples['time_ns'] - time_origin_ns) / 1e9
@@ -166,6 +193,8 @@ def summarize_steps(samples: pd.DataFrame, tail_duration_s: float) -> pd.DataFra
         time_start_s=('time_s', 'min'),
         time_end_s=('time_s', 'max'),
         command_voltage_v=('command_voltage_v', 'mean'),
+        flowmeter_full_scale_l_min=(
+            'flowmeter_full_scale_l_min', 'first'),
         flow_l_min_anr=('flow_l_min_anr', 'mean'),
         flow_std_l_min=('flow_l_min_anr', 'std'),
         supply_pressure_kpa_g=('supply_pressure_kpa_g', 'mean'),
@@ -254,9 +283,13 @@ def add_effective_area(
     )
     result['effective_area_mm2'] = result['effective_area_m2'] * 1e6
 
-    full_scale = float(config['flowmeter']['full_scale_l_min'])
+    if 'flowmeter_full_scale_l_min' in result:
+        flowmeter_full_scale = result['flowmeter_full_scale_l_min']
+    else:
+        flowmeter_full_scale = float(
+            config['flowmeter']['full_scale_l_min'])
     result['flow_near_full_scale'] = (
-        result['flow_l_min_anr'].abs() >= 0.98 * full_scale)
+        result['flow_l_min_anr'].abs() >= 0.98 * flowmeter_full_scale)
     result['valid_pressure_ratio'] = (
         (result['pressure_ratio'] >= 0.0) &
         (result['pressure_ratio'] < 1.0)
